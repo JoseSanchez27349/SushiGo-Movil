@@ -1,5 +1,6 @@
 package com.example.clinetesushigo.ui.screens.login
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -14,12 +15,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
@@ -31,12 +34,30 @@ private val Beige = Color(0xFFE9E0D5)
 fun LoginScreen(
     onLogin: () -> Unit,
     onRegister: () -> Unit,
-    onForgotPassword: () -> Unit
+    onForgotPassword: () -> Unit,
+    viewModel: LoginViewModel = viewModel()
 ) {
-
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    // Escuchar cambios de estado en la petición API
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is LoginUiState.Success -> {
+                Toast.makeText(context, "¡Bienvenido ${state.nombreUsuario}!", Toast.LENGTH_SHORT).show()
+                onLogin()
+            }
+            is LoginUiState.Error -> {
+                Toast.makeText(context, state.mensaje, Toast.LENGTH_LONG).show()
+                viewModel.limpiarEstadoError()
+            }
+            else -> {}
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -116,6 +137,7 @@ fun LoginScreen(
             },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            enabled = uiState !is LoginUiState.Loading,
             shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = WineRed,
@@ -161,6 +183,7 @@ fun LoginScreen(
                 PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            enabled = uiState !is LoginUiState.Loading,
             shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = WineRed,
@@ -186,9 +209,10 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(15.dp))
 
-        // BOTÓN INICIAR SESIÓN
+        // BOTÓN INICIAR SESIÓN CON LOADING
         Button(
-            onClick = onLogin,
+            onClick = { viewModel.login(email, password) },
+            enabled = uiState !is LoginUiState.Loading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -197,13 +221,21 @@ fun LoginScreen(
             ),
             shape = RoundedCornerShape(15.dp)
         ) {
-            Text(
-                text = "INICIAR SESIÓN",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp,
-                color = Color.White
-            )
+            if (uiState is LoginUiState.Loading) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.5.dp
+                )
+            } else {
+                Text(
+                    text = "INICIAR SESIÓN",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    color = Color.White
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))

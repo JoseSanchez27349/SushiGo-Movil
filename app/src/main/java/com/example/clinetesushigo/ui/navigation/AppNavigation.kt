@@ -2,7 +2,6 @@ package com.example.clinetesushigo.ui.navigation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.*
-import androidx.compose.material3.Text
 
 import com.example.clinetesushigo.data.model.Order
 import com.example.clinetesushigo.data.repository.OrderManager
@@ -18,6 +17,7 @@ import com.example.clinetesushigo.ui.screens.confirmation.ConfirmationScreen
 import com.example.clinetesushigo.ui.screens.profile.ProfileScreen
 import com.example.clinetesushigo.ui.screens.orders.OrdersScreen
 import com.example.clinetesushigo.ui.screens.promotions.PromotionsScreen
+import com.example.clinetesushigo.ui.screens.forgotpassword.ForgotPasswordScreen // 👈 Import agregado
 
 @Composable
 fun AppNavigation() {
@@ -183,9 +183,14 @@ fun AppNavigation() {
             }
         )
 
-        // RECUPERAR CONTRASEÑA
-        "forgot" -> Text(
-            text = "Recuperar contraseña"
+        // 🔑 RECUPERAR CONTRASEÑA (CONECTADO)
+        "forgot" -> ForgotPasswordScreen(
+            onPasswordResetSuccess = {
+                currentScreen = "login"
+            },
+            onBackToLogin = {
+                currentScreen = "login"
+            }
         )
     }
 }
