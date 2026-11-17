@@ -6,6 +6,8 @@ import androidx.compose.runtime.*
 import com.example.clinetesushigo.data.model.Order
 import com.example.clinetesushigo.data.repository.OrderManager
 
+import com.example.clinetesushigo.ui.components.SushiGoNavigationDrawer
+
 import com.example.clinetesushigo.ui.screens.splash.SplashScreen
 import com.example.clinetesushigo.ui.screens.login.LoginScreen
 import com.example.clinetesushigo.ui.screens.register.RegisterScreen
@@ -17,7 +19,9 @@ import com.example.clinetesushigo.ui.screens.confirmation.ConfirmationScreen
 import com.example.clinetesushigo.ui.screens.profile.ProfileScreen
 import com.example.clinetesushigo.ui.screens.orders.OrdersScreen
 import com.example.clinetesushigo.ui.screens.promotions.PromotionsScreen
-import com.example.clinetesushigo.ui.screens.forgotpassword.ForgotPasswordScreen // 👈 Import agregado
+import com.example.clinetesushigo.ui.screens.forgotpassword.ForgotPasswordScreen
+import com.example.clinetesushigo.ui.screens.branches.BranchesScreen
+import com.example.clinetesushigo.ui.screens.contact.ContactScreen
 
 @Composable
 fun AppNavigation() {
@@ -25,10 +29,7 @@ fun AppNavigation() {
     var currentScreen by remember { mutableStateOf("splash") }
     var currentOrder by remember { mutableStateOf<Order?>(null) }
 
-    // =====================================
     // BOTÓN ATRÁS DEL CELULAR
-    // =====================================
-
     BackHandler(enabled = currentScreen != "splash") {
 
         currentScreen = when (currentScreen) {
@@ -40,6 +41,8 @@ fun AppNavigation() {
             "home" -> "login"
 
             "menu" -> "home"
+            "branches" -> "home"
+            "contact" -> "home"
             "promotions" -> "home"
 
             "cart" -> "home"
@@ -54,143 +57,175 @@ fun AppNavigation() {
         }
     }
 
-    // =====================================
-    // NAVEGACIÓN ENTRE PANTALLAS
-    // =====================================
+    // CONTENIDO DE LAS PANTALLAS
+    val screenContent: @Composable () -> Unit = {
 
-    when (currentScreen) {
+        when (currentScreen) {
 
-        // BIENVENIDA
-        "splash" -> SplashScreen(
-            onStart = {
-                currentScreen = "login"
-            }
-        )
+            // BIENVENIDA
+            "splash" -> SplashScreen(
+                onStart = {
+                    currentScreen = "login"
+                }
+            )
 
-        // INICIO DE SESIÓN
-        "login" -> LoginScreen(
-            onLogin = {
-                currentScreen = "home"
-            },
-            onRegister = {
-                currentScreen = "register"
-            },
-            onForgotPassword = {
-                currentScreen = "forgot"
-            }
-        )
-
-        // REGISTRO
-        "register" -> RegisterScreen(
-            onRegister = {
-                currentScreen = "login"
-            },
-            onLogin = {
-                currentScreen = "login"
-            }
-        )
-
-        // INICIO
-        "home" -> HomeScreen(
-            onOpenCart = {
-                currentScreen = "cart"
-            },
-            onOpenMenu = {
-                currentScreen = "menu"
-            },
-            onOpenProfile = {
-                currentScreen = "profile"
-            },
-            onOpenPromotions = {
-                currentScreen = "promotions"
-            }
-        )
-
-        // MENÚ
-        "menu" -> MenuScreen(
-            onBack = {
-                currentScreen = "home"
-            },
-            onOpenCart = {
-                currentScreen = "cart"
-            }
-        )
-
-        // PROMOCIONES Y OFERTAS
-        "promotions" -> PromotionsScreen(
-            onBack = {
-                currentScreen = "home"
-            },
-            onOpenCart = {
-                currentScreen = "cart"
-            }
-        )
-
-        // CARRITO
-        "cart" -> CartScreen(
-            onBack = {
-                currentScreen = "home"
-            },
-            onContinueShopping = {
-                currentScreen = "checkout"
-            }
-        )
-
-        // CHECKOUT
-        "checkout" -> CheckoutScreen(
-            onBack = {
-                currentScreen = "cart"
-            },
-            onConfirmOrder = { pickupTime, paymentMethod ->
-
-                currentOrder = OrderManager.createOrder(
-                    pickupTime = pickupTime,
-                    paymentMethod = paymentMethod
-                )
-
-                currentScreen = "confirmation"
-            }
-        )
-
-        // CONFIRMACIÓN
-        "confirmation" -> currentOrder?.let { order ->
-
-            ConfirmationScreen(
-                order = order,
-                onGoHome = {
+            // INICIO DE SESIÓN
+            "login" -> LoginScreen(
+                onLogin = {
                     currentScreen = "home"
+                },
+                onRegister = {
+                    currentScreen = "register"
+                },
+                onForgotPassword = {
+                    currentScreen = "forgot"
+                }
+            )
+
+            // REGISTRO
+            "register" -> RegisterScreen(
+                onRegister = {
+                    currentScreen = "login"
+                },
+                onLogin = {
+                    currentScreen = "login"
+                }
+            )
+
+            // INICIO
+            "home" -> HomeScreen(
+                onOpenCart = {
+                    currentScreen = "cart"
+                },
+                onOpenMenu = {
+                    currentScreen = "menu"
+                },
+                onOpenProfile = {
+                    currentScreen = "profile"
+                },
+                onOpenPromotions = {
+                    currentScreen = "promotions"
+                }
+            )
+
+            // MENÚ
+            "menu" -> MenuScreen(
+                onBack = {
+                    currentScreen = "home"
+                },
+                onOpenCart = {
+                    currentScreen = "cart"
+                }
+            )
+
+            // SUCURSALES
+            "branches" -> BranchesScreen()
+
+            // CONTACTO
+            "contact" -> ContactScreen()
+
+            // PROMOCIONES
+            "promotions" -> PromotionsScreen(
+                onBack = {
+                    currentScreen = "home"
+                },
+                onOpenCart = {
+                    currentScreen = "cart"
+                }
+            )
+
+            // CARRITO
+            "cart" -> CartScreen(
+                onBack = {
+                    currentScreen = "home"
+                },
+                onContinueShopping = {
+                    currentScreen = "checkout"
+                }
+            )
+
+            // CHECKOUT
+            "checkout" -> CheckoutScreen(
+                onBack = {
+                    currentScreen = "cart"
+                },
+                onConfirmOrder = { pickupTime, paymentMethod ->
+
+                    currentOrder = OrderManager.createOrder(
+                        pickupTime = pickupTime,
+                        paymentMethod = paymentMethod
+                    )
+
+                    currentScreen = "confirmation"
+                }
+            )
+
+            // CONFIRMACIÓN
+            "confirmation" -> currentOrder?.let { order ->
+
+                ConfirmationScreen(
+                    order = order,
+                    onGoHome = {
+                        currentScreen = "home"
+                    }
+                )
+            }
+
+            // PERFIL
+            "profile" -> ProfileScreen(
+                onBack = {
+                    currentScreen = "home"
+                },
+                onViewOrders = {
+                    currentScreen = "orders"
+                },
+                onLogout = {
+                    currentScreen = "login"
+                }
+            )
+
+            // HISTORIAL
+            "orders" -> OrdersScreen(
+                onBack = {
+                    currentScreen = "profile"
+                }
+            )
+
+            // RECUPERAR CONTRASEÑA
+            "forgot" -> ForgotPasswordScreen(
+                onPasswordResetSuccess = {
+                    currentScreen = "login"
+                },
+                onBackToLogin = {
+                    currentScreen = "login"
                 }
             )
         }
+    }
 
-        // PERFIL
-        "profile" -> ProfileScreen(
-            onBack = {
-                currentScreen = "home"
-            },
-            onViewOrders = {
-                currentScreen = "orders"
-            },
-            onLogout = {
-                currentScreen = "login"
-            }
-        )
+    // PANTALLAS QUE TENDRÁN EL MENÚ LATERAL
+    val drawerScreens = listOf(
+        "home",
+        "menu",
+        "branches",
+        "cart",
+        "contact",
+        "promotions",
+        "profile"
+    )
+    if (currentScreen in drawerScreens) {
 
-        // HISTORIAL DE PEDIDOS
-        "orders" -> OrdersScreen(
-            onBack = {
-                currentScreen = "profile"
+        SushiGoNavigationDrawer(
+            currentScreen = currentScreen,
+            onNavigate = { destination ->
+                currentScreen = destination
             }
-        )
+        ) {
+            screenContent()
+        }
 
-        // 🔑 RECUPERAR CONTRASEÑA (CONECTADO)
-        "forgot" -> ForgotPasswordScreen(
-            onPasswordResetSuccess = {
-                currentScreen = "login"
-            },
-            onBackToLogin = {
-                currentScreen = "login"
-            }
-        )
+    } else {
+
+        screenContent()
     }
 }

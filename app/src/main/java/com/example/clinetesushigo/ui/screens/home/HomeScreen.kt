@@ -3,20 +3,25 @@ package com.example.clinetesushigo.ui.screens.home
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.clinetesushigo.data.repository.CartManager
 
 private val Cream = Color(0xFFF8F5F0)
@@ -24,13 +29,20 @@ private val WineRed = Color(0xFF9E3038)
 private val DarkText = Color(0xFF252525)
 private val SoftBrown = Color(0xFF81776D)
 private val Beige = Color(0xFFE9E0D5)
-private val White = Color(0xFFFFFFFF)
+private val White = Color.White
 
 data class Product(
     val name: String,
     val description: String,
     val price: String,
     val emoji: String
+)
+
+data class Offer(
+    val title: String,
+    val description: String,
+    val imageUrl: String,
+    val label: String
 )
 
 @Composable
@@ -44,6 +56,36 @@ fun HomeScreen(
     val context = LocalContext.current
 
     var search by remember { mutableStateOf("") }
+
+    val offers = listOf(
+        Offer(
+            title = "Sushi para compartir",
+            description = "Disfruta tus rollos favoritos.",
+            imageUrl = "https://images.unsplash.com/photo-1579871494447-9811cf80d66c",
+            label = "FAVORITOS"
+        ),
+        Offer(
+            title = "Una experiencia japonesa",
+            description = "Descubre sabores únicos.",
+            imageUrl = "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351",
+            label = "RECOMENDACIÓN"
+        ),
+        Offer(
+            title = "Momentos deliciosos",
+            description = "El sabor perfecto para hoy.",
+            imageUrl = "https://images.unsplash.com/photo-1553621042-f6e147245754",
+            label = "ESPECIAL"
+        )
+    )
+
+    val categories = listOf(
+        "🍣 Sushi",
+        "🍜 Ramen",
+        "🍚 Yakimeshi",
+        "🥟 Entradas",
+        "🥤 Bebidas",
+        "🍰 Postres"
+    )
 
     val products = listOf(
         Product(
@@ -81,105 +123,68 @@ fun HomeScreen(
             .fillMaxSize()
             .background(Cream)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 22.dp, vertical = 25.dp)
+            .padding(bottom = 25.dp)
     ) {
 
-        // =====================================
         // ENCABEZADO
-        // =====================================
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 22.dp)
+                .padding(top = 25.dp)
         ) {
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Text(
+                text = "¡Hola! 👋",
+                fontSize = 14.sp,
+                color = SoftBrown
+            )
 
-                Text(
-                    text = "BIENVENIDO A",
-                    fontSize = 11.sp,
-                    letterSpacing = 3.sp,
-                    color = SoftBrown,
-                    fontWeight = FontWeight.Medium
-                )
+            Spacer(modifier = Modifier.height(5.dp))
 
-                Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "¿Qué se te antoja hoy?",
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Bold,
+                color = DarkText
+            )
 
-                Text(
-                    text = "SushiGo",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
+            Spacer(modifier = Modifier.height(6.dp))
 
-                Text(
-                    text = "Una experiencia de sabor japonés",
-                    fontSize = 12.sp,
-                    color = SoftBrown
-                )
-            }
-
-            // PERFIL
-            Surface(
-                onClick = onOpenProfile,
-                shape = CircleShape,
-                color = White,
-                shadowElevation = 1.dp,
-                modifier = Modifier.size(43.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("👤", fontSize = 19.sp)
-                }
-            }
-
-            Spacer(modifier = Modifier.width(10.dp))
-
-            // CARRITO
-            Surface(
-                onClick = onOpenCart,
-                shape = CircleShape,
-                color = White,
-                shadowElevation = 1.dp,
-                modifier = Modifier.size(43.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("🛒", fontSize = 19.sp)
-                }
-            }
+            Text(
+                text = "Descubre el auténtico sabor de Japón.",
+                fontSize = 13.sp,
+                color = SoftBrown
+            )
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(22.dp))
 
-        // =====================================
         // BUSCADOR
-        // =====================================
 
         OutlinedTextField(
             value = search,
             onValueChange = { search = it },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 22.dp),
             placeholder = {
                 Text(
-                    text = "Buscar platillo...",
-                    color = SoftBrown,
-                    fontSize = 14.sp
+                    "Buscar sushi, bebidas, entradas...",
+                    fontSize = 13.sp,
+                    color = SoftBrown
                 )
             },
             leadingIcon = {
                 Text(
                     "⌕",
-                    fontSize = 24.sp,
+                    fontSize = 25.sp,
                     color = SoftBrown
                 )
             },
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(15.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedContainerColor = White,
                 focusedContainerColor = White,
@@ -191,146 +196,298 @@ fun HomeScreen(
             )
         )
 
-        Spacer(modifier = Modifier.height(25.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
-        // =====================================
-        // BANNER PRINCIPAL
-        // =====================================
+        // CARRUSEL DE OFERTAS
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 22.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Column {
+                Text(
+                    text = "Ofertas especiales",
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+
+                Text(
+                    text = "Algo delicioso te está esperando",
+                    fontSize = 12.sp,
+                    color = SoftBrown
+                )
+            }
+
+            Text(
+                text = "Ver todas",
+                color = WineRed,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable {
+                    onOpenPromotions()
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(15.dp))
+
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 22.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+
+            items(offers) { offer ->
+
+                Card(
+                    modifier = Modifier
+                        .width(285.dp)
+                        .height(185.dp)
+                        .clickable {
+                            onOpenPromotions()
+                        },
+                    shape = RoundedCornerShape(20.dp),
+                    elevation = CardDefaults.cardElevation(3.dp)
+                ) {
+
+                    Box(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+
+                        AsyncImage(
+                            model = offer.imageUrl,
+                            contentDescription = offer.title,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color.Black.copy(alpha = 0.82f)
+                                        )
+                                    )
+                                )
+                        )
+
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(17.dp)
+                        ) {
+
+                            Surface(
+                                color = WineRed,
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = offer.label,
+                                    modifier = Modifier.padding(
+                                        horizontal = 9.dp,
+                                        vertical = 5.dp
+                                    ),
+                                    color = White,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = offer.title,
+                                color = White,
+                                fontSize = 19.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                text = offer.description,
+                                color = White.copy(alpha = 0.9f),
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(30.dp))
+
+        // CATEGORÍAS
+
+        Column {
+
+            Text(
+                text = "Explora nuestro menú",
+                modifier = Modifier.padding(horizontal = 22.dp),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = DarkText
+            )
+
+            Spacer(modifier = Modifier.height(5.dp))
+
+            Text(
+                text = "Encuentra algo perfecto para ti",
+                modifier = Modifier.padding(horizontal = 22.dp),
+                fontSize = 12.sp,
+                color = SoftBrown
+            )
+
+            Spacer(modifier = Modifier.height(15.dp))
+
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 22.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+
+                items(categories) { category ->
+
+                    Surface(
+                        modifier = Modifier.clickable {
+                            onOpenMenu()
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        color = White,
+                        border = BorderStroke(1.dp, Beige)
+                    ) {
+
+                        Text(
+                            text = category,
+                            modifier = Modifier.padding(
+                                horizontal = 15.dp,
+                                vertical = 12.dp
+                            ),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = DarkText
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(30.dp))
+
+        // BANNER DESTACADO
 
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 22.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 containerColor = WineRed
             )
         ) {
 
-            Column(
-                modifier = Modifier.padding(22.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
 
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        text = "UNA EXPERIENCIA ÚNICA",
+                        color = White.copy(alpha = 0.8f),
+                        fontSize = 9.sp,
+                        letterSpacing = 1.2.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "El placer de disfrutar cada bocado.",
+                        color = White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 25.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Descubre nuestro menú",
+                        color = White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.clickable {
+                            onOpenMenu()
+                        }
+                    )
+                }
+
                 Text(
-                    text = "EXPERIENCIA SUSHIGO",
-                    color = White.copy(alpha = 0.8f),
-                    fontSize = 10.sp,
-                    letterSpacing = 2.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "El arte de disfrutar\ncada bocado.",
-                    color = White,
-                    fontSize = 25.sp,
-                    lineHeight = 31.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Descubre nuestros sabores japoneses.",
-                    color = White.copy(alpha = 0.85f),
-                    fontSize = 13.sp
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Text(
-                    text = "SUSHIGO  •  SABOR Y TRADICIÓN",
-                    color = White,
-                    fontSize = 10.sp,
-                    letterSpacing = 1.sp
+                    text = "🍣",
+                    fontSize = 55.sp
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(15.dp))
-
-        // =====================================
-        // BOTÓN DE PROMOCIONES
-        // =====================================
-
-        OutlinedButton(
-            onClick = onOpenPromotions,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = WineRed
-            ),
-            border = BorderStroke(
-                1.dp,
-                WineRed
-            )
-        ) {
-
-            Text(
-                text = "VER PROMOCIONES Y OFERTAS",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(15.dp))
-
-        // =====================================
-        // BOTÓN MENÚ COMPLETO
-        // =====================================
-
-        Button(
-            onClick = onOpenMenu,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = WineRed
-            )
-        ) {
-
-            Text(
-                text = "VER MENÚ COMPLETO",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = White
-            )
-        }
-
         Spacer(modifier = Modifier.height(30.dp))
 
-        // =====================================
         // PRODUCTOS FAVORITOS
-        // =====================================
 
-        Text(
-            text = "Nuestros favoritos",
-            fontSize = 21.sp,
-            fontWeight = FontWeight.Bold,
-            color = DarkText
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 22.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
 
-        Spacer(modifier = Modifier.height(5.dp))
+            Column {
 
-        Text(
-            text = "Seleccionados especialmente para ti",
-            fontSize = 12.sp,
-            color = SoftBrown
-        )
+                Text(
+                    text = "Nuestros favoritos",
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+
+                Text(
+                    text = "Los sabores que no te puedes perder",
+                    fontSize = 12.sp,
+                    color = SoftBrown
+                )
+            }
+
+            Text(
+                text = "Ver menú",
+                color = WineRed,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable {
+                    onOpenMenu()
+                }
+            )
+        }
 
         Spacer(modifier = Modifier.height(17.dp))
 
-        // =====================================
-        // TARJETAS DE PRODUCTOS
-        // =====================================
+        // LISTA DE PRODUCTOS
 
         filteredProducts.forEach { product ->
 
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 22.dp)
                     .padding(bottom = 13.dp),
                 shape = RoundedCornerShape(17.dp),
                 colors = CardDefaults.cardColors(
@@ -346,7 +503,6 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    // IMAGEN DEL PRODUCTO
                     Surface(
                         modifier = Modifier.size(65.dp),
                         shape = RoundedCornerShape(14.dp),
@@ -366,7 +522,6 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.width(13.dp))
 
-                    // INFORMACIÓN
                     Column(
                         modifier = Modifier.weight(1f)
                     ) {
@@ -399,7 +554,6 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.width(5.dp))
 
-                    // AGREGAR AL CARRITO
                     Button(
                         onClick = {
 
@@ -438,28 +592,28 @@ fun HomeScreen(
             }
         }
 
-        // =====================================
-        // MENSAJE SIN RESULTADOS
-        // =====================================
-
         if (filteredProducts.isEmpty()) {
 
             Text(
                 text = "No encontramos productos.",
                 color = SoftBrown,
-                modifier = Modifier.padding(vertical = 20.dp)
+                modifier = Modifier.padding(
+                    horizontal = 22.dp,
+                    vertical = 20.dp
+                )
             )
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // =====================================
         // PIE DE PÁGINA
-        // =====================================
 
-        HorizontalDivider(color = Beige)
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 22.dp),
+            color = Beige
+        )
 
-        Spacer(modifier = Modifier.height(15.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         Text(
             text = "SUSHIGO",
@@ -471,5 +625,12 @@ fun HomeScreen(
         )
 
         Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Sabor japonés en cada momento.",
+            modifier = Modifier.fillMaxWidth(),
+            color = SoftBrown,
+            fontSize = 11.sp
+        )
     }
 }
