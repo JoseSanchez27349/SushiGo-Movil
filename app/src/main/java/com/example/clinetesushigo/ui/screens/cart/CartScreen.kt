@@ -8,13 +8,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.clinetesushigo.data.model.CartItem
+import com.example.clinetesushigo.data.network.RetrofitClient
 import com.example.clinetesushigo.data.repository.CartManager
 
 private val Cream = Color(0xFFF8F5F0)
@@ -29,6 +34,9 @@ fun CartScreen(
     onBack: () -> Unit,
     onContinueShopping: () -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        CartManager.syncCart()
+    }
 
     val products = CartManager.cartItems
     val total = CartManager.getTotal()
@@ -38,7 +46,6 @@ fun CartScreen(
             .fillMaxSize()
             .background(Cream)
     ) {
-
         // ENCABEZADO
         Row(
             modifier = Modifier
@@ -46,7 +53,6 @@ fun CartScreen(
                 .padding(horizontal = 22.dp, vertical = 20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             TextButton(
                 onClick = onBack,
                 contentPadding = PaddingValues(0.dp)
@@ -80,9 +86,15 @@ fun CartScreen(
             thickness = 1.dp
         )
 
-        // CARRITO VACÍO
-        if (products.isEmpty()) {
-
+        if (CartManager.isSyncing && products.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = WineRed)
+            }
+        } else if (products.isEmpty()) {
+            // CARRITO VACÍO
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -90,15 +102,12 @@ fun CartScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-
                 Surface(
                     modifier = Modifier.size(110.dp),
                     shape = CircleShape,
                     color = Beige
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(contentAlignment = Alignment.Center) {
                         Text(
                             text = "🛒",
                             fontSize = 48.sp
@@ -139,9 +148,7 @@ fun CartScreen(
                     Text("Explorar menú")
                 }
             }
-
         } else {
-
             // LISTA DE PRODUCTOS
             LazyColumn(
                 modifier = Modifier
@@ -153,7 +160,6 @@ fun CartScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(13.dp)
             ) {
-
                 item {
                     Text(
                         text = "Tus selecciones",
@@ -172,7 +178,6 @@ fun CartScreen(
                 }
 
                 items(products.toList()) { product ->
-
                     CartProductItem(product = product)
                 }
             }
@@ -184,7 +189,6 @@ fun CartScreen(
                     .background(White)
                     .padding(horizontal = 22.dp, vertical = 20.dp)
             ) {
-
                 Text(
                     text = "Resumen de compra",
                     fontSize = 17.sp,
@@ -198,7 +202,6 @@ fun CartScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-
                     Text(
                         text = "Subtotal",
                         fontSize = 14.sp,
@@ -223,7 +226,6 @@ fun CartScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     Text(
                         text = "Total",
                         fontSize = 19.sp,
@@ -241,7 +243,6 @@ fun CartScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // BOTÓN CONTINUAR
                 Button(
                     onClick = onContinueShopping,
                     modifier = Modifier
@@ -252,7 +253,6 @@ fun CartScreen(
                     ),
                     shape = RoundedCornerShape(13.dp)
                 ) {
-
                     Text(
                         text = "CONTINUAR CON LA COMPRA",
                         fontSize = 13.sp,
@@ -265,9 +265,9 @@ fun CartScreen(
     }
 }
 
-// TARJETA DE PRODUCTO
 @Composable
 fun CartProductItem(product: CartItem) {
+    val resolvedImage = RetrofitClient.resolveImageUrl(product.imageUrl)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -279,39 +279,39 @@ fun CartProductItem(product: CartItem) {
             defaultElevation = 1.dp
         )
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            // IMAGEN DEL PRODUCTO
             Surface(
-                modifier = Modifier.size(65.dp),
+                modifier = Modifier
+                    .size(65.dp)
+                    .clip(RoundedCornerShape(13.dp)),
                 shape = RoundedCornerShape(13.dp),
                 color = Cream
             ) {
-
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-
-                    Text(
-                        text = product.emoji,
-                        fontSize = 34.sp
-                    )
+                Box(contentAlignment = Alignment.Center) {
+                    if (!resolvedImage.isNullOrBlank()) {
+                        AsyncImage(
+                            model = resolvedImage,
+                            contentDescription = product.name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = product.emoji,
+                            fontSize = 34.sp
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // INFORMACIÓN
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = product.name,
                     fontSize = 15.sp,
@@ -330,23 +330,14 @@ fun CartProductItem(product: CartItem) {
 
                 Spacer(modifier = Modifier.height(9.dp))
 
-                // CONTROL DE CANTIDAD
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        onClick = {
-                            CartManager.decreaseQuantity(product)
-                        },
+                        onClick = { CartManager.decreaseQuantity(product) },
                         shape = RoundedCornerShape(7.dp),
                         color = Cream,
                         modifier = Modifier.size(30.dp)
                     ) {
-
-                        Box(
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(contentAlignment = Alignment.Center) {
                             Text(
                                 text = "−",
                                 fontSize = 18.sp,
@@ -364,17 +355,12 @@ fun CartProductItem(product: CartItem) {
                     )
 
                     Surface(
-                        onClick = {
-                            CartManager.increaseQuantity(product)
-                        },
+                        onClick = { CartManager.increaseQuantity(product) },
                         shape = RoundedCornerShape(7.dp),
                         color = Cream,
                         modifier = Modifier.size(30.dp)
                     ) {
-
-                        Box(
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(contentAlignment = Alignment.Center) {
                             Text(
                                 text = "+",
                                 fontSize = 18.sp,
@@ -385,14 +371,10 @@ fun CartProductItem(product: CartItem) {
                 }
             }
 
-            // ELIMINAR
             TextButton(
-                onClick = {
-                    CartManager.removeProduct(product)
-                },
+                onClick = { CartManager.removeProduct(product) },
                 contentPadding = PaddingValues(4.dp)
             ) {
-
                 Text(
                     text = "Eliminar",
                     color = SoftBrown,

@@ -1,5 +1,6 @@
 package com.example.clinetesushigo.ui.screens.confirmation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -24,7 +25,8 @@ private val White = Color(0xFFFFFFFF)
 @Composable
 fun ConfirmationScreen(
     order: Order,
-    onGoHome: () -> Unit
+    onGoHome: () -> Unit,
+    onTrackOrder: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -69,7 +71,7 @@ fun ConfirmationScreen(
         )
 
         Text(
-            text = "Estamos preparando todo para ti.",
+            text = "Tu comanda ya llegó a cocina (~${order.estimatedMinutes} min).",
             fontSize = 14.sp,
             color = SoftBrown
         )
@@ -102,7 +104,7 @@ fun ConfirmationScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "#${order.orderNumber}",
+                    text = "#${order.orderNumber.removePrefix("#")}",
                     fontSize = 27.sp,
                     fontWeight = FontWeight.Bold,
                     color = WineRed
@@ -159,7 +161,7 @@ fun ConfirmationScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Text(
             text = "Presenta tu número de pedido al recogerlo.",
@@ -167,21 +169,42 @@ fun ConfirmationScreen(
             color = SoftBrown
         )
 
-        Spacer(modifier = Modifier.height(22.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            onClick = onGoHome,
+            onClick = onTrackOrder,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(55.dp),
+                .height(53.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = WineRed
             )
         ) {
             Text(
-                text = "REGRESAR AL INICIO",
+                text = "SEGUIR MI PEDIDO EN VIVO",
                 fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedButton(
+            onClick = onGoHome,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp),
+            border = BorderStroke(1.dp, WineRed),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = WineRed
+            )
+        ) {
+            Text(
+                text = "REGRESAR AL INICIO",
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.5.sp
             )

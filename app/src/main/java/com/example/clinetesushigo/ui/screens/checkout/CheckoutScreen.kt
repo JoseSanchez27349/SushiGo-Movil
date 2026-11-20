@@ -1,5 +1,8 @@
 package com.example.clinetesushigo.ui.screens.checkout
 
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,10 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.clinetesushigo.data.repository.CartManager
+import com.example.clinetesushigo.data.repository.OrderManager
+import kotlinx.coroutines.launch
 
 private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
@@ -27,17 +33,16 @@ fun CheckoutScreen(
     onBack: () -> Unit,
     onConfirmOrder: (String, String) -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    var pickupTime by remember {
-        mutableStateOf("Lo antes posible")
-    }
+    var pickupTime by remember { mutableStateOf("Lo antes posible") }
+    var paymentMethod by remember { mutableStateOf("Efectivo") }
+    var expanded by remember { mutableStateOf(false) }
+    var isSubmitting by remember { mutableStateOf(false) }
 
-    var paymentMethod by remember {
-        mutableStateOf("Efectivo")
-    }
-
-    var expanded by remember {
-        mutableStateOf(false)
+    LaunchedEffect(Unit) {
+        CartManager.syncCart()
     }
 
     val total = CartManager.getTotal()
@@ -47,7 +52,6 @@ fun CheckoutScreen(
             .fillMaxSize()
             .background(Cream)
     ) {
-
         // ENCABEZADO
         Row(
             modifier = Modifier
@@ -55,9 +59,9 @@ fun CheckoutScreen(
                 .padding(horizontal = 22.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             TextButton(
                 onClick = onBack,
+                enabled = !isSubmitting,
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
@@ -86,7 +90,6 @@ fun CheckoutScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 22.dp, vertical = 20.dp)
         ) {
-
             // TÍTULO
             Text(
                 text = "Casi listo...",
@@ -118,24 +121,16 @@ fun CheckoutScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = White
-                )
+                colors = CardDefaults.cardColors(containerColor = White)
             ) {
-
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-
+                Column(modifier = Modifier.padding(16.dp)) {
                     CartManager.cartItems.forEach { product ->
-
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 9.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-
                             Text(
                                 text = product.emoji,
                                 fontSize = 27.sp
@@ -143,10 +138,7 @@ fun CheckoutScreen(
 
                             Spacer(modifier = Modifier.width(12.dp))
 
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = product.name,
                                     fontSize = 14.sp,
@@ -178,7 +170,6 @@ fun CheckoutScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-
                         Text(
                             text = "Total a pagar",
                             fontSize = 16.sp,
@@ -211,27 +202,22 @@ fun CheckoutScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(15.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = White
-                )
+                colors = CardDefaults.cardColors(containerColor = White)
             ) {
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(17.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     Text(
-                        text = "",
+                        text = "🏪",
                         fontSize = 30.sp
                     )
 
                     Spacer(modifier = Modifier.width(13.dp))
 
                     Column {
-
                         Text(
                             text = "Recoger en restaurante",
                             fontSize = 15.sp,
@@ -263,30 +249,23 @@ fun CheckoutScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Box {
-
                 OutlinedButton(
-                    onClick = {
-                        expanded = true
-                    },
+                    onClick = { expanded = true },
+                    enabled = !isSubmitting,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(13.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = White,
                         contentColor = DarkText
                     ),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        Beige
-                    ),
+                    border = BorderStroke(1.dp, Beige),
                     contentPadding = PaddingValues(16.dp)
                 ) {
-
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
                         Text(
                             text = " $pickupTime",
                             fontSize = 14.sp
@@ -302,19 +281,15 @@ fun CheckoutScreen(
 
                 DropdownMenu(
                     expanded = expanded,
-                    onDismissRequest = {
-                        expanded = false
-                    },
+                    onDismissRequest = { expanded = false },
                     modifier = Modifier.background(White)
                 ) {
-
                     listOf(
                         "Lo antes posible",
                         "En 30 minutos",
                         "En 45 minutos",
                         "En 1 hora"
                     ).forEach { time ->
-
                         DropdownMenuItem(
                             text = {
                                 Text(
@@ -349,9 +324,7 @@ fun CheckoutScreen(
                 description = "Paga al recoger tu pedido.",
                 emoji = "💵",
                 selected = paymentMethod == "Efectivo",
-                onClick = {
-                    paymentMethod = "Efectivo"
-                }
+                onClick = { if (!isSubmitting) paymentMethod = "Efectivo" }
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -362,9 +335,7 @@ fun CheckoutScreen(
                 description = "Pago con tarjeta.",
                 emoji = "💳",
                 selected = paymentMethod == "Tarjeta",
-                onClick = {
-                    paymentMethod = "Tarjeta"
-                }
+                onClick = { if (!isSubmitting) paymentMethod = "Tarjeta" }
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -377,32 +348,56 @@ fun CheckoutScreen(
                 .background(White)
                 .padding(horizontal = 22.dp, vertical = 17.dp)
         ) {
-
             Button(
                 onClick = {
-                    if (CartManager.cartItems.isNotEmpty()) {
-                        onConfirmOrder(
-                            pickupTime,
-                            paymentMethod
-                        )
+                    Log.d("CHECKOUT_DEBUG", "Botón Confirmar presionado. Items: ${CartManager.cartItems.size}")
+                    if (CartManager.cartItems.isNotEmpty() && !isSubmitting) {
+                        scope.launch {
+                            isSubmitting = true
+                            try {
+                                val result = OrderManager.createOrderAsync(
+                                    pickupTime = pickupTime,
+                                    paymentMethod = paymentMethod
+                                )
+
+                                result.onSuccess { order ->
+                                    Log.d("CHECKOUT_DEBUG", "Orden creada en servidor: ${order.orderNumber}")
+                                    onConfirmOrder(pickupTime, paymentMethod)
+                                }.onFailure { error ->
+                                    Log.e("CHECKOUT_DEBUG", "Error en checkout: ${error.message}")
+                                    Toast.makeText(
+                                        context,
+                                        error.message ?: "Error al confirmar pedido",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            } finally {
+                                isSubmitting = false
+                            }
+                        }
                     }
                 },
-                enabled = CartManager.cartItems.isNotEmpty(),
+                enabled = CartManager.cartItems.isNotEmpty() && !isSubmitting,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(53.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = WineRed
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = WineRed),
                 shape = RoundedCornerShape(13.dp)
             ) {
-
-                Text(
-                    text = "CONFIRMAR PEDIDO",
-                    fontSize = 13.sp,
-                    letterSpacing = 1.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                if (isSubmitting) {
+                    CircularProgressIndicator(
+                        color = White,
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.5.dp
+                    )
+                } else {
+                    Text(
+                        text = "CONFIRMAR PEDIDO",
+                        fontSize = 13.sp,
+                        letterSpacing = 1.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     }
@@ -417,30 +412,24 @@ fun PaymentOption(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (selected)
-                Color(0xFFF2E8E4)
-            else
-                White
+            containerColor = if (selected) Color(0xFFF2E8E4) else White
         ),
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             1.dp,
             if (selected) WineRed else Beige
         )
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(13.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Text(
                 text = emoji,
                 fontSize = 27.sp
@@ -448,10 +437,7 @@ fun PaymentOption(
 
             Spacer(modifier = Modifier.width(13.dp))
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     fontSize = 14.sp,
@@ -469,9 +455,7 @@ fun PaymentOption(
             RadioButton(
                 selected = selected,
                 onClick = onClick,
-                colors = RadioButtonDefaults.colors(
-                    selectedColor = WineRed
-                )
+                colors = RadioButtonDefaults.colors(selectedColor = WineRed)
             )
         }
     }

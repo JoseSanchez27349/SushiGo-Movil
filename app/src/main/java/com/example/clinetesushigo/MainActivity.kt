@@ -8,13 +8,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.example.clinetesushigo.ui.theme.ClineteSushiGoTheme
+import com.example.clinetesushigo.data.network.RetrofitClient
 import com.example.clinetesushigo.ui.navigation.AppNavigation
+import com.example.clinetesushigo.ui.theme.ClineteSushiGoTheme
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Inicializa RetrofitClient con el contexto para leer el token guardado en TokenManager
+        RetrofitClient.init(applicationContext)
+
         enableEdgeToEdge()
 
         setContent {

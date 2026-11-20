@@ -5,18 +5,31 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.clinetesushigo.data.model.CategoryDto
+import com.example.clinetesushigo.data.model.ProductDto
+import com.example.clinetesushigo.data.network.RetrofitClient
 import com.example.clinetesushigo.data.repository.CartManager
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
@@ -25,59 +38,80 @@ private val SoftBrown = Color(0xFF81776D)
 private val Beige = Color(0xFFE9E0D5)
 private val White = Color(0xFFFFFFFF)
 
-private data class MenuProduct(
-    val name: String,
-    val description: String,
-    val price: Int,
-    val emoji: String,
-    val category: String
-)
-
 @Composable
 fun MenuScreen(
     onBack: () -> Unit,
     onOpenCart: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var searchText by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("Todos") }
+    var selectedCategoryId by remember { mutableStateOf("ALL") }
 
-    val categories = listOf(
-        "Todos",
-        "Sushi",
-        "Entradas",
-        "Platillos",
-        "Bebidas",
-        "Postres"
-    )
+    var categories by remember {
+        mutableStateOf(listOf(CategoryDto(id = "ALL", nombre = "Todos")))
+    }
+    var products by remember { mutableStateOf<List<ProductDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val products = listOf(
-        MenuProduct("California Roll", "Surimi, pepino y aguacate.", 95, "🍣", "Sushi"),
-        MenuProduct("Philadelphia Roll", "Queso crema, salmón y pepino.", 115, "🍣", "Sushi"),
-        MenuProduct("Kanikama Roll", "Surimi, aguacate y ajonjolí.", 105, "🍱", "Sushi"),
-        MenuProduct("Tampico Roll", "Surimi preparado con salsa tampico.", 110, "🍣", "Sushi"),
-        MenuProduct("Gyozas", "Empanaditas japonesas.", 75, "🥟", "Entradas"),
-        MenuProduct("Edamames", "Vainas de soya al vapor.", 65, "🫛", "Entradas"),
-        MenuProduct("Kushiagues", "Brochetas empanizadas.", 85, "🍢", "Entradas"),
-        MenuProduct("Yakimeshi", "Arroz frito estilo japonés.", 85, "🍚", "Platillos"),
-        MenuProduct("Ramen", "Caldo japonés con fideos.", 125, "🍜", "Platillos"),
-        MenuProduct("Pollo Teriyaki", "Pollo con salsa teriyaki y arroz.", 115, "🍗", "Platillos"),
-        MenuProduct("Té verde", "Bebida refrescante.", 35, "🍵", "Bebidas"),
-        MenuProduct("Limonada", "Limonada natural.", 40, "🍋", "Bebidas"),
-        MenuProduct("Mochi", "Postre japonés suave y dulce.", 55, "🍡", "Postres"),
-        MenuProduct("Helado", "Helado de vainilla.", 45, "🍨", "Postres")
-    )
+    suspend fun cargarMenu() {
+        isLoading = true
+        errorMessage = null
+        try {
+            coroutineScope {
+                val catDeferred = async { RetrofitClient.menuApiService.obtenerCategorias() }
+                val prodDeferred = async { RetrofitClient.menuApiService.obtenerProductos() }
+
+                val catResponse = catDeferred.await()
+                val prodResponse = prodDeferred.await()
+
+                if (catResponse.isSuccessful && prodResponse.isSuccessful) {
+                    val activas = extractList<CategoryDto>(
+                        catResponse.body(),
+                        "categorias",
+                        "data"
+                    ).filter { it.activa ?: true }
+
+                    categories = listOf(CategoryDto(id = "ALL", nombre = "Todos")) + activas
+                    products = extractList(
+                        prodResponse.body(),
+                        "productos",
+                        "data"
+                    )
+
+                    if (categories.none { it.id == selectedCategoryId }) {
+                        selectedCategoryId = "ALL"
+                    }
+                } else {
+                    errorMessage = "Error del servidor (Cat: ${catResponse.code()}, Prod: ${prodResponse.code()})"
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            errorMessage = "Error al cargar menú: ${e.javaClass.simpleName} - ${e.localizedMessage ?: "Sin detalle"}"
+        } finally {
+            isLoading = false
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        cargarMenu()
+    }
 
     val filteredProducts = products.filter { product ->
         val matchesCategory =
-            selectedCategory == "Todos" || product.category == selectedCategory
+            selectedCategoryId == "ALL" || product.resolvedCategoryId() == selectedCategoryId
+
+        val nombreSafe = product.nombre.orEmpty()
+        val descSafe = product.descripcion.orEmpty()
 
         val matchesSearch =
-            product.name.contains(searchText, ignoreCase = true) ||
-                    product.description.contains(searchText, ignoreCase = true)
+            nombreSafe.contains(searchText, ignoreCase = true) ||
+                    descSafe.contains(searchText, ignoreCase = true)
 
-        matchesCategory && matchesSearch
+        product.isAvailable() && matchesCategory && matchesSearch
     }
 
     Column(
@@ -85,7 +119,6 @@ fun MenuScreen(
             .fillMaxSize()
             .background(Cream)
     ) {
-
         // Encabezado
         Row(
             modifier = Modifier
@@ -155,7 +188,7 @@ fun MenuScreen(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // Categorías
+        // Categorías dinámicas desde el Admin
         Text(
             text = "Categorías",
             modifier = Modifier.padding(horizontal = 20.dp),
@@ -166,22 +199,25 @@ fun MenuScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        androidx.compose.foundation.lazy.LazyRow(
+        LazyRow(
             contentPadding = PaddingValues(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(9.dp)
         ) {
-            items(categories) { category ->
-                val selected = selectedCategory == category
+            itemsIndexed(
+                items = categories,
+                key = { index, category -> "${category.id}_$index" }
+            ) { _, category ->
+                val selected = selectedCategoryId == category.id
 
                 Surface(
                     shape = RoundedCornerShape(20.dp),
                     color = if (selected) WineRed else White,
                     modifier = Modifier.clickable {
-                        selectedCategory = category
+                        selectedCategoryId = category.id
                     }
                 ) {
                     Text(
-                        text = category,
+                        text = category.nombre.orEmpty(),
                         modifier = Modifier.padding(
                             horizontal = 17.dp,
                             vertical = 10.dp
@@ -205,124 +241,199 @@ fun MenuScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Lista de productos
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
-                bottom = 25.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(filteredProducts) { product ->
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = White
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 1.dp
-                    )
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(15.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    CircularProgressIndicator(color = WineRed)
+                }
+            }
 
-                        Surface(
-                            modifier = Modifier.size(68.dp),
-                            shape = RoundedCornerShape(15.dp),
-                            color = Cream
+            errorMessage != null -> {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = errorMessage!!,
+                        color = SoftBrown,
+                        fontSize = 13.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = { scope.launch { cargarMenu() } },
+                        colors = ButtonDefaults.buttonColors(containerColor = WineRed)
+                    ) {
+                        Text("Reintentar", color = White)
+                    }
+                }
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(
+                        start = 20.dp,
+                        end = 20.dp,
+                        bottom = 25.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    itemsIndexed(
+                        items = filteredProducts,
+                        key = { index, product -> "${product.id}_$index" }
+                    ) { _, product ->
+                        val resolvedImage = RetrofitClient.resolveImageUrl(product.urlImagen)
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = product.emoji,
-                                    fontSize = 35.sp
-                                )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(15.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    modifier = Modifier
+                                        .size(68.dp)
+                                        .clip(RoundedCornerShape(15.dp)),
+                                    shape = RoundedCornerShape(15.dp),
+                                    color = Cream
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        if (!resolvedImage.isNullOrBlank()) {
+                                            AsyncImage(
+                                                model = resolvedImage,
+                                                contentDescription = product.nombre,
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        } else {
+                                            Text(text = "🍣", fontSize = 35.sp)
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(13.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = product.nombre.orEmpty(),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = DarkText
+                                    )
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    Text(
+                                        text = product.descripcion.orEmpty().ifBlank { "Especialidad SushiGo" },
+                                        fontSize = 11.sp,
+                                        color = SoftBrown,
+                                        lineHeight = 15.sp
+                                    )
+
+                                    Spacer(modifier = Modifier.height(7.dp))
+
+                                    val formattedPrice = if (product.precio % 1.0 == 0.0) {
+                                        "${product.precio.toInt()}"
+                                    } else {
+                                        String.format("%.2f", product.precio)
+                                    }
+
+                                    Text(
+                                        text = "$$formattedPrice MXN",
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = WineRed
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Button(
+                                    onClick = {
+
+                                        CartManager.addProduct(
+                                            productoId = product.id,
+                                            name = product.nombre.orEmpty(),
+                                            description = product.descripcion.orEmpty(),
+                                            price = product.precio.toInt(),
+                                            emoji = "🍣",
+                                            imageUrl = product.urlImagen
+                                        )
+
+                                        Toast.makeText(
+                                            context,
+                                            "${product.nombre} agregado al carrito",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    },
+                                    modifier = Modifier.size(39.dp),
+                                    contentPadding = PaddingValues(0.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = WineRed)
+                                ) {
+                                    Text(
+                                        text = "+",
+                                        fontSize = 23.sp,
+                                        color = White
+                                    )
+                                }
                             }
                         }
+                    }
 
-                        Spacer(modifier = Modifier.width(13.dp))
-
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
+                    if (filteredProducts.isEmpty()) {
+                        item {
                             Text(
-                                text = product.name,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = DarkText
-                            )
-
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            Text(
-                                text = product.description,
-                                fontSize = 11.sp,
-                                color = SoftBrown,
-                                lineHeight = 15.sp
-                            )
-
-                            Spacer(modifier = Modifier.height(7.dp))
-
-                            Text(
-                                text = "$${product.price} MXN",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = WineRed
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Button(
-                            onClick = {
-                                CartManager.addProduct(
-                                    name = product.name,
-                                    description = product.description,
-                                    price = product.price,
-                                    emoji = product.emoji
-                                )
-
-                                Toast.makeText(
-                                    context,
-                                    "${product.name} agregado al carrito",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            },
-                            modifier = Modifier.size(39.dp),
-                            contentPadding = PaddingValues(0.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = WineRed
-                            )
-                        ) {
-                            Text(
-                                text = "+",
-                                fontSize = 23.sp,
-                                color = White
+                                text = "No encontramos productos en esta categoría.",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(30.dp),
+                                color = SoftBrown
                             )
                         }
                     }
                 }
             }
-
-            if (filteredProducts.isEmpty()) {
-                item {
-                    Text(
-                        text = "No encontramos productos.",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(30.dp),
-                        color = SoftBrown
-                    )
-                }
-            }
         }
     }
+}
+
+// Extrae la lista tanto si viene como [...] directo o envuelta en { "categorias"/"productos"/"data": [...] }
+private inline fun <reified T> extractList(element: JsonElement?, vararg keys: String): List<T> {
+    if (element == null || element.isJsonNull) return emptyList()
+    val array = when {
+        element.isJsonArray -> element.asJsonArray
+        element.isJsonObject -> {
+            val obj = element.asJsonObject
+            keys.firstNotNullOfOrNull { key ->
+                obj.get(key)?.takeIf { it.isJsonArray }?.asJsonArray
+            }
+                ?: obj.entrySet().firstOrNull { it.value.isJsonArray }?.value?.asJsonArray
+                ?: obj.entrySet()
+                    .firstOrNull { it.value.isJsonObject }
+                    ?.value?.asJsonObject
+                    ?.entrySet()
+                    ?.firstOrNull { it.value.isJsonArray }
+                    ?.value?.asJsonArray
+        }
+        else -> null
+    } ?: return emptyList()
+
+    val type = object : TypeToken<List<T>>() {}.type
+    return Gson().fromJson(array, type) ?: emptyList()
 }
