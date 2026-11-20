@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 
 import com.example.clinetesushigo.data.model.Order
 import com.example.clinetesushigo.data.repository.OrderManager
+import com.example.clinetesushigo.data.repository.CartManager
 
 import com.example.clinetesushigo.ui.components.SushiGoNavigationDrawer
 
@@ -22,12 +23,25 @@ import com.example.clinetesushigo.ui.screens.promotions.PromotionsScreen
 import com.example.clinetesushigo.ui.screens.forgotpassword.ForgotPasswordScreen
 import com.example.clinetesushigo.ui.screens.branches.BranchesScreen
 import com.example.clinetesushigo.ui.screens.contact.ContactScreen
+import com.example.clinetesushigo.ui.screens.productdetail.ProductDetailScreen
 
 @Composable
 fun AppNavigation() {
 
     var currentScreen by remember { mutableStateOf("splash") }
     var currentOrder by remember { mutableStateOf<Order?>(null) }
+
+    // INFORMACIÓN DEL PRODUCTO SELECCIONADO
+    var selectedProductName by remember { mutableStateOf("") }
+    var selectedProductDescription by remember { mutableStateOf("") }
+    var selectedProductPrice by remember { mutableIntStateOf(0) }
+    var selectedProductEmoji by remember { mutableStateOf("") }
+    var selectedProductCategory by remember { mutableStateOf("") }
+    var selectedProductProtein by remember { mutableStateOf("") }
+    var selectedProductVegetarian by remember { mutableStateOf(false) }
+    var selectedProductSpicy by remember { mutableStateOf(false) }
+    var selectedProductPreparation by remember { mutableStateOf("") }
+    var selectedProductImage by remember { mutableStateOf("") }
 
     // BOTÓN ATRÁS DEL CELULAR
     BackHandler(enabled = currentScreen != "splash") {
@@ -41,6 +55,8 @@ fun AppNavigation() {
             "home" -> "login"
 
             "menu" -> "home"
+            "productdetail" -> "menu"
+
             "branches" -> "home"
             "contact" -> "home"
             "promotions" -> "home"
@@ -114,6 +130,55 @@ fun AppNavigation() {
                     currentScreen = "home"
                 },
                 onOpenCart = {
+                    currentScreen = "cart"
+                },
+                onOpenProduct = { name, description, price, emoji,
+                                  category, protein, vegetarian,
+                                  spicy, preparation, imageUrl ->
+
+                    selectedProductName = name
+                    selectedProductDescription = description
+                    selectedProductPrice = price
+                    selectedProductEmoji = emoji
+                    selectedProductCategory = category
+                    selectedProductProtein = protein
+                    selectedProductVegetarian = vegetarian
+                    selectedProductSpicy = spicy
+                    selectedProductPreparation = preparation
+                    selectedProductImage = imageUrl
+
+                    currentScreen = "productdetail"
+                }
+            )
+
+            // DETALLES DEL PRODUCTO
+            "productdetail" -> ProductDetailScreen(
+                name = selectedProductName,
+                description = selectedProductDescription,
+                price = selectedProductPrice,
+                emoji = selectedProductEmoji,
+                category = selectedProductCategory,
+                protein = selectedProductProtein,
+                vegetarian = selectedProductVegetarian,
+                spicy = selectedProductSpicy,
+                preparation = selectedProductPreparation,
+                imageUrl = selectedProductImage,
+
+                onBack = {
+                    currentScreen = "menu"
+                },
+
+                onAddToCart = { quantity ->
+
+                    repeat(quantity) {
+                        CartManager.addProduct(
+                            name = selectedProductName,
+                            description = selectedProductDescription,
+                            price = selectedProductPrice,
+                            emoji = selectedProductEmoji
+                        )
+                    }
+
                     currentScreen = "cart"
                 }
             )
@@ -213,6 +278,7 @@ fun AppNavigation() {
         "promotions",
         "profile"
     )
+
     if (currentScreen in drawerScreens) {
 
         SushiGoNavigationDrawer(

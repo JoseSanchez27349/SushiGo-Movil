@@ -105,7 +105,7 @@ fun CheckoutScreen(
 
             Spacer(modifier = Modifier.height(25.dp))
 
-            // RESUMEN
+            // RESUMEN DEL PEDIDO
             Text(
                 text = "Resumen de tu pedido",
                 fontSize = 18.sp,
@@ -224,7 +224,7 @@ fun CheckoutScreen(
                 ) {
 
                     Text(
-                        text = "",
+                        text = "🍱",
                         fontSize = 30.sp
                     )
 
@@ -252,7 +252,7 @@ fun CheckoutScreen(
 
             Spacer(modifier = Modifier.height(27.dp))
 
-            // HORARIO
+            // HORARIO DE RECOGIDA
             Text(
                 text = "Horario de recogida",
                 fontSize = 18.sp,
@@ -288,7 +288,7 @@ fun CheckoutScreen(
                     ) {
 
                         Text(
-                            text = " $pickupTime",
+                            text = pickupTime,
                             fontSize = 14.sp
                         )
 
@@ -345,8 +345,8 @@ fun CheckoutScreen(
 
             // OPCIÓN EFECTIVO
             PaymentOption(
-                title = "Efectivo",
-                description = "Paga al recoger tu pedido.",
+                title = "Efectivo en restaurante",
+                description = "Paga en efectivo al recoger tu pedido.",
                 emoji = "💵",
                 selected = paymentMethod == "Efectivo",
                 onClick = {
@@ -358,8 +358,8 @@ fun CheckoutScreen(
 
             // OPCIÓN TARJETA
             PaymentOption(
-                title = "Tarjeta",
-                description = "Pago con tarjeta.",
+                title = "Tarjeta en restaurante",
+                description = "Paga con tarjeta al recoger tu pedido.",
                 emoji = "💳",
                 selected = paymentMethod == "Tarjeta",
                 onClick = {
