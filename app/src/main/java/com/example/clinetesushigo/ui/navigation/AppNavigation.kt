@@ -253,6 +253,9 @@ fun AppNavigation() {
             "orders" -> OrdersScreen(
                 onBack = {
                     currentScreen = "profile"
+                },
+                onOpenCart = {
+                    currentScreen = "cart"
                 }
             )
 
