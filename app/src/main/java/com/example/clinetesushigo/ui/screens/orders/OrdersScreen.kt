@@ -45,13 +45,13 @@ fun OrdersScreen(
     val scope = rememberCoroutineScope()
     val orders = OrderManager.orders
 
-    // Cargar al entrar y actualizar automáticamente cada 15s si hay pedidos en curso
+    // Cargar al entrar y sincronizar cada 4s mientras existan pedidos en curso
     LaunchedEffect(Unit) {
         OrderManager.fetchMyOrders()
         while (true) {
-            delay(15_000)
+            delay(4_000)
             val hasActive = OrderManager.orders.any {
-                it.rawStatus.lowercase() in listOf("pendiente", "en_espera", "en_preparacion", "listo")
+                it.rawStatus.lowercase() in listOf("pendiente", "en_espera", "en_preparacion", "listo", "preparado")
             }
             if (hasActive) {
                 OrderManager.fetchMyOrders(silent = true)
@@ -96,7 +96,10 @@ fun OrdersScreen(
 
             TextButton(
                 onClick = {
-                    scope.launch { OrderManager.fetchMyOrders() }
+                    scope.launch {
+                        OrderManager.fetchMyOrders()
+                        Toast.makeText(context, "Estado actualizado", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 enabled = !OrderManager.isLoading
             ) {
@@ -119,7 +122,6 @@ fun OrdersScreen(
                 CircularProgressIndicator(color = WineRed)
             }
         } else if (orders.isEmpty()) {
-            // HISTORIAL VACÍO
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -151,7 +153,6 @@ fun OrdersScreen(
                 )
             }
         } else {
-            // LISTA DE PEDIDOS
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
@@ -188,11 +189,11 @@ private fun OrderCard(
     onReorder: () -> Unit
 ) {
     val raw = order.rawStatus.lowercase()
-    val isActive = raw in listOf("pendiente", "en_espera", "en_preparacion", "listo")
+    val isActive = raw in listOf("pendiente", "en_espera", "en_preparacion", "listo", "preparado")
 
     val (badgeBg, badgeText) = when (raw) {
         "cancelado" -> Pair(Color(0xFFFFEBEE), Color(0xFFC62828))
-        "listo" -> Pair(SuccessBg, SuccessGreen)
+        "listo", "preparado" -> Pair(SuccessBg, SuccessGreen)
         "en_preparacion" -> Pair(PrepBg, PrepAmber)
         "entregado", "pagado" -> Pair(Color(0xFFEEEEEE), SoftBrown)
         else -> Pair(Color(0xFFF5E6E8), WineRed)
@@ -205,7 +206,6 @@ private fun OrderCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
-            // NÚMERO Y ESTADO
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -241,7 +241,6 @@ private fun OrderCard(
                 }
             }
 
-            // BARRA DE PROGRESO EN VIVO SI ESTÁ EN COCINA
             if (isActive) {
                 Spacer(modifier = Modifier.height(16.dp))
                 KitchenProgressTracker(
@@ -255,7 +254,6 @@ private fun OrderCard(
                 color = Beige
             )
 
-            // PRODUCTOS
             Text(
                 text = "Productos",
                 fontSize = 13.sp,
@@ -358,7 +356,7 @@ private fun KitchenProgressTracker(
     estimatedMinutes: Int
 ) {
     val currentStep = when (rawStatus) {
-        "listo" -> 2
+        "listo", "preparado" -> 2
         "en_preparacion" -> 1
         else -> 0
     }

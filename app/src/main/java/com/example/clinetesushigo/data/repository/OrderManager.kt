@@ -62,6 +62,12 @@ object OrderManager {
             val productsSnapshot = CartManager.cartItems.map { it.copy() }
             val totalSnapshot = CartManager.getTotal()
 
+            if (productsSnapshot.any { it.productoId.isBlank() }) {
+                return Result.failure(
+                    Exception("Hay productos sin ID de servidor. Agrégalos desde el botón + de Menú.")
+                )
+            }
+
             val response = RetrofitClient.cartApiService.checkout(
                 CheckoutRequest(
                     metodoPago = paymentMethod.lowercase(),
@@ -218,7 +224,7 @@ object OrderManager {
         return when {
             ord == "cancelado" || kit == "cancelado" -> "cancelado"
             ord == "entregado" || ord == "pagado" || kit == "entregado" -> "entregado"
-            ord == "listo" || kit == "listo" -> "listo"
+            ord == "listo" || ord == "preparado" || kit == "listo" -> "listo"
             ord == "en_preparacion" || kit == "en_preparacion" -> "en_preparacion"
             else -> "pendiente"
         }

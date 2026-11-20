@@ -24,14 +24,18 @@ import com.example.clinetesushigo.ui.screens.forgotpassword.ForgotPasswordScreen
 import com.example.clinetesushigo.ui.screens.branches.BranchesScreen
 import com.example.clinetesushigo.ui.screens.contact.ContactScreen
 import com.example.clinetesushigo.ui.screens.productdetail.ProductDetailScreen
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation() {
+
+    val scope = rememberCoroutineScope()
 
     var currentScreen by remember { mutableStateOf("splash") }
     var currentOrder by remember { mutableStateOf<Order?>(null) }
 
     // INFORMACIÓN DEL PRODUCTO SELECCIONADO
+    var selectedProductId by remember { mutableStateOf("") }
     var selectedProductName by remember { mutableStateOf("") }
     var selectedProductDescription by remember { mutableStateOf("") }
     var selectedProductPrice by remember { mutableIntStateOf(0) }
@@ -88,6 +92,7 @@ fun AppNavigation() {
             // INICIO DE SESIÓN
             "login" -> LoginScreen(
                 onLogin = {
+                    scope.launch { CartManager.syncCart() }
                     currentScreen = "home"
                 },
                 onRegister = {
@@ -132,10 +137,11 @@ fun AppNavigation() {
                 onOpenCart = {
                     currentScreen = "cart"
                 },
-                onOpenProduct = { name, description, price, emoji,
+                onOpenProduct = { id, name, description, price, emoji,
                                   category, protein, vegetarian,
                                   spicy, preparation, imageUrl ->
 
+                    selectedProductId = id
                     selectedProductName = name
                     selectedProductDescription = description
                     selectedProductPrice = price
@@ -169,16 +175,15 @@ fun AppNavigation() {
                 },
 
                 onAddToCart = { quantity ->
-
-                    repeat(quantity) {
-                        CartManager.addProduct(
-                            name = selectedProductName,
-                            description = selectedProductDescription,
-                            price = selectedProductPrice,
-                            emoji = selectedProductEmoji
-                        )
-                    }
-
+                    CartManager.addProduct(
+                        productoId = selectedProductId,
+                        name = selectedProductName,
+                        description = selectedProductDescription,
+                        price = selectedProductPrice,
+                        emoji = selectedProductEmoji,
+                        imageUrl = selectedProductImage.ifBlank { null },
+                        quantity = quantity
+                    )
                     currentScreen = "cart"
                 }
             )
@@ -209,29 +214,29 @@ fun AppNavigation() {
                 }
             )
 
-            // CHECKOUT
+            // CHECKOUT (CheckoutScreen ya ejecuta createOrderAsync)
             "checkout" -> CheckoutScreen(
                 onBack = {
                     currentScreen = "cart"
                 },
                 onConfirmOrder = { pickupTime, paymentMethod ->
-
                     currentOrder = OrderManager.createOrder(
                         pickupTime = pickupTime,
                         paymentMethod = paymentMethod
                     )
-
                     currentScreen = "confirmation"
                 }
             )
 
             // CONFIRMACIÓN
             "confirmation" -> currentOrder?.let { order ->
-
                 ConfirmationScreen(
                     order = order,
                     onGoHome = {
                         currentScreen = "home"
+                    },
+                    onTrackOrder = {
+                        currentScreen = "orders"
                     }
                 )
             }
@@ -245,6 +250,8 @@ fun AppNavigation() {
                     currentScreen = "orders"
                 },
                 onLogout = {
+                    CartManager.cartItems.clear()
+                    OrderManager.orders.clear()
                     currentScreen = "login"
                 }
             )

@@ -1,6 +1,9 @@
 package com.example.clinetesushigo.ui.screens.checkout
 
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,10 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.clinetesushigo.data.repository.CartManager
+import com.example.clinetesushigo.data.repository.OrderManager
+import kotlinx.coroutines.launch
 
 private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
@@ -25,21 +31,29 @@ private val White = Color(0xFFFFFFFF)
 @Composable
 fun CheckoutScreen(
     onBack: () -> Unit,
-    onConfirmOrder: (String, String) -> Unit
+    onConfirmOrder: (pickupTime: String, paymentMethod: String) -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    var pickupTime by remember {
-        mutableStateOf("Lo antes posible")
-    }
+    val pickupOptions = listOf(
+        "Lo antes posible (15-20 min)",
+        "En 30 minutos",
+        "En 45 minutos",
+        "En 1 hora"
+    )
 
-    var paymentMethod by remember {
-        mutableStateOf("Efectivo")
-    }
+    val paymentOptions = listOf(
+        "Efectivo",
+        "Tarjeta",
+        "Transferencia"
+    )
 
-    var expanded by remember {
-        mutableStateOf(false)
-    }
+    var selectedPickup by remember { mutableStateOf(pickupOptions.first()) }
+    var selectedPayment by remember { mutableStateOf(paymentOptions.first()) }
+    var isSubmitting by remember { mutableStateOf(false) }
 
+    val items = CartManager.cartItems
     val total = CartManager.getTotal()
 
     Column(
@@ -47,430 +61,285 @@ fun CheckoutScreen(
             .fillMaxSize()
             .background(Cream)
     ) {
-
         // ENCABEZADO
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 22.dp, vertical = 18.dp),
+                .padding(horizontal = 20.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             TextButton(
-                onClick = onBack,
-                contentPadding = PaddingValues(0.dp)
+                onClick = { if (!isSubmitting) onBack() },
+                enabled = !isSubmitting
             ) {
                 Text(
-                    text = "← Regresar",
-                    color = WineRed,
-                    fontSize = 14.sp
+                    text = "‹",
+                    fontSize = 32.sp,
+                    color = DarkText
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Column {
+                Text(
+                    text = "Confirmar pedido",
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
 
-            Text(
-                text = "Finalizar compra",
-                fontSize = 21.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
+                Text(
+                    text = "Revisa los detalles antes de enviar a cocina",
+                    fontSize = 12.sp,
+                    color = SoftBrown
+                )
+            }
         }
-
-        HorizontalDivider(color = Beige)
 
         Column(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 22.dp, vertical = 20.dp)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
-            // TÍTULO
-            Text(
-                text = "Casi listo...",
-                fontSize = 27.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
-
-            Spacer(modifier = Modifier.height(5.dp))
-
-            Text(
-                text = "Revisa tu pedido y selecciona cómo deseas recogerlo.",
-                fontSize = 13.sp,
-                color = SoftBrown
-            )
-
-            Spacer(modifier = Modifier.height(25.dp))
-
-            // RESUMEN
-            Text(
-                text = "Resumen de tu pedido",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
+            // RESUMEN DE PRODUCTOS
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = White
-                )
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text(
+                        text = "RESUMEN DE TU ORDEN",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        color = SoftBrown
+                    )
 
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    CartManager.cartItems.forEach { product ->
-
+                    items.forEach { item ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 9.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-
                             Text(
-                                text = product.emoji,
-                                fontSize = 27.sp
+                                text = "${item.quantity}x ${item.name}",
+                                fontSize = 14.sp,
+                                color = DarkText,
+                                modifier = Modifier.weight(1f)
                             )
 
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-
-                                Text(
-                                    text = product.name,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = DarkText
-                                )
-
-                                Text(
-                                    text = "Cantidad: ${product.quantity}",
-                                    fontSize = 12.sp,
-                                    color = SoftBrown
-                                )
-                            }
-
                             Text(
-                                text = "$${product.price * product.quantity}",
+                                text = "$${item.price * item.quantity}",
                                 fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = DarkText
                             )
                         }
                     }
 
-                    HorizontalDivider(color = Beige)
-
-                    Spacer(modifier = Modifier.height(13.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-
-                        Text(
-                            text = "Total a pagar",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = DarkText
-                        )
-
-                        Text(
-                            text = "$${total} MXN",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = WineRed
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(27.dp))
-
-            // TIPO DE ENTREGA
-            Text(
-                text = "Tipo de entrega",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(15.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = White
-                )
-            ) {
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(17.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Text(
-                        text = "",
-                        fontSize = 30.sp
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 14.dp),
+                        color = Beige
                     )
-
-                    Spacer(modifier = Modifier.width(13.dp))
-
-                    Column {
-
-                        Text(
-                            text = "Recoger en restaurante",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = DarkText
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = "Recoge tu pedido directamente en SushiGo.",
-                            fontSize = 12.sp,
-                            color = SoftBrown
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(27.dp))
-
-            // HORARIO
-            Text(
-                text = "Horario de recogida",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Box {
-
-                OutlinedButton(
-                    onClick = {
-                        expanded = true
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(13.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = White,
-                        contentColor = DarkText
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        Beige
-                    ),
-                    contentPadding = PaddingValues(16.dp)
-                ) {
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
                         Text(
-                            text = " $pickupTime",
-                            fontSize = 14.sp
+                            text = "Total a pagar",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DarkText
                         )
 
                         Text(
-                            text = "⌄",
+                            text = "$$total MXN",
                             fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
                             color = WineRed
-                        )
-                    }
-                }
-
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = {
-                        expanded = false
-                    },
-                    modifier = Modifier.background(White)
-                ) {
-
-                    listOf(
-                        "Lo antes posible",
-                        "En 30 minutos",
-                        "En 45 minutos",
-                        "En 1 hora"
-                    ).forEach { time ->
-
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = time,
-                                    color = DarkText
-                                )
-                            },
-                            onClick = {
-                                pickupTime = time
-                                expanded = false
-                            }
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(27.dp))
+            // HORARIO DE RECOGIDA
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text(
+                        text = "HORARIO DE RECOGIDA",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        color = SoftBrown
+                    )
 
-            // MÉTODO DE PAGO
-            Text(
-                text = "Método de pago",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
+                    Spacer(modifier = Modifier.height(10.dp))
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // OPCIÓN EFECTIVO
-            PaymentOption(
-                title = "Efectivo",
-                description = "Paga al recoger tu pedido.",
-                emoji = "💵",
-                selected = paymentMethod == "Efectivo",
-                onClick = {
-                    paymentMethod = "Efectivo"
-                }
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // OPCIÓN TARJETA
-            PaymentOption(
-                title = "Tarjeta",
-                description = "Pago con tarjeta.",
-                emoji = "💳",
-                selected = paymentMethod == "Tarjeta",
-                onClick = {
-                    paymentMethod = "Tarjeta"
-                }
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-        }
-
-        // BOTÓN FINAL
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(White)
-                .padding(horizontal = 22.dp, vertical = 17.dp)
-        ) {
-
-            Button(
-                onClick = {
-                    if (CartManager.cartItems.isNotEmpty()) {
-                        onConfirmOrder(
-                            pickupTime,
-                            paymentMethod
+                    pickupOptions.forEach { option ->
+                        SelectableOptionRow(
+                            label = option,
+                            selected = selectedPickup == option,
+                            enabled = !isSubmitting,
+                            onClick = { selectedPickup = option }
                         )
                     }
-                },
-                enabled = CartManager.cartItems.isNotEmpty(),
+                }
+            }
+
+            // MÉTODO DE PAGO
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text(
+                        text = "MÉTODO DE PAGO AL RECOGER",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        color = SoftBrown
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    paymentOptions.forEach { method ->
+                        SelectableOptionRow(
+                            label = method,
+                            selected = selectedPayment == method,
+                            enabled = !isSubmitting,
+                            onClick = { selectedPayment = method }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        // BOTÓN CONFIRMAR
+        Surface(
+            color = White,
+            shadowElevation = 6.dp
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(53.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = WineRed
-                ),
-                shape = RoundedCornerShape(13.dp)
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
+                Button(
+                    onClick = {
+                        if (isSubmitting || items.isEmpty()) return@Button
 
-                Text(
-                    text = "CONFIRMAR PEDIDO",
-                    fontSize = 13.sp,
-                    letterSpacing = 1.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                        scope.launch {
+                            isSubmitting = true
+                            val result = OrderManager.createOrderAsync(
+                                pickupTime = selectedPickup,
+                                paymentMethod = selectedPayment
+                            )
+                            isSubmitting = false
+
+                            result.onSuccess {
+                                onConfirmOrder(selectedPickup, selectedPayment)
+                            }.onFailure { error ->
+                                Toast.makeText(
+                                    context,
+                                    error.message ?: "No se pudo enviar el pedido a cocina",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                    },
+                    enabled = !isSubmitting && items.isNotEmpty(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = WineRed,
+                        disabledContainerColor = WineRed.copy(alpha = 0.5f)
+                    )
+                ) {
+                    if (isSubmitting) {
+                        CircularProgressIndicator(
+                            color = White,
+                            modifier = Modifier.size(22.dp),
+                            strokeWidth = 2.5.dp
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "ENVIANDO A COCINA...",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = White
+                        )
+                    } else {
+                        Text(
+                            text = "CONFIRMAR PEDIDO · $$total MXN",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-// COMPONENTE DE MÉTODO DE PAGO
 @Composable
-fun PaymentOption(
-    title: String,
-    description: String,
-    emoji: String,
+private fun SelectableOptionRow(
+    label: String,
     selected: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit
 ) {
-
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected)
-                Color(0xFFF2E8E4)
-            else
-                White
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (selected) WineRed else Beige
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable(enabled = enabled, onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        color = if (selected) WineRed.copy(alpha = 0.08f) else Cream,
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (selected) WineRed else Beige
         )
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(13.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
             Text(
-                text = emoji,
-                fontSize = 27.sp
+                text = label,
+                fontSize = 14.sp,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (selected) WineRed else DarkText
             )
-
-            Spacer(modifier = Modifier.width(13.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-
-                Text(
-                    text = title,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
-
-                Text(
-                    text = description,
-                    fontSize = 12.sp,
-                    color = SoftBrown
-                )
-            }
 
             RadioButton(
                 selected = selected,
-                onClick = onClick,
+                onClick = null,
                 colors = RadioButtonDefaults.colors(
-                    selectedColor = WineRed
+                    selectedColor = WineRed,
+                    unselectedColor = SoftBrown
                 )
             )
         }
