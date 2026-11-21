@@ -13,7 +13,6 @@ import com.example.clinetesushigo.ui.screens.splash.SplashScreen
 import com.example.clinetesushigo.ui.screens.login.LoginScreen
 import com.example.clinetesushigo.ui.screens.register.RegisterScreen
 import com.example.clinetesushigo.ui.screens.home.HomeScreen
-import com.example.clinetesushigo.ui.screens.menu.MenuScreen
 import com.example.clinetesushigo.ui.screens.cart.CartScreen
 import com.example.clinetesushigo.ui.screens.checkout.CheckoutScreen
 import com.example.clinetesushigo.ui.screens.confirmation.ConfirmationScreen
@@ -21,9 +20,9 @@ import com.example.clinetesushigo.ui.screens.profile.ProfileScreen
 import com.example.clinetesushigo.ui.screens.orders.OrdersScreen
 import com.example.clinetesushigo.ui.screens.promotions.PromotionsScreen
 import com.example.clinetesushigo.ui.screens.forgotpassword.ForgotPasswordScreen
-import com.example.clinetesushigo.ui.screens.branches.BranchesScreen
 import com.example.clinetesushigo.ui.screens.contact.ContactScreen
 import com.example.clinetesushigo.ui.screens.productdetail.ProductDetailScreen
+
 import kotlinx.coroutines.launch
 
 @Composable
@@ -58,8 +57,8 @@ fun AppNavigation() {
 
             "home" -> "login"
 
-            "menu" -> "home"
-            "productdetail" -> "menu"
+            // Los detalles ahora regresan directamente a Inicio
+            "productdetail" -> "home"
 
             "branches" -> "home"
             "contact" -> "home"
@@ -92,7 +91,9 @@ fun AppNavigation() {
             // INICIO DE SESIÓN
             "login" -> LoginScreen(
                 onLogin = {
-                    scope.launch { CartManager.syncCart() }
+                    scope.launch {
+                        CartManager.syncCart()
+                    }
                     currentScreen = "home"
                 },
                 onRegister = {
@@ -113,34 +114,26 @@ fun AppNavigation() {
                 }
             )
 
-            // INICIO
+            // INICIO CON EL MENÚ INTEGRADO
             "home" -> HomeScreen(
                 onOpenCart = {
                     currentScreen = "cart"
                 },
                 onOpenMenu = {
-                    currentScreen = "menu"
+                    // Ya no existe una pantalla independiente para el menú.
+                    // Los productos se muestran directamente en Inicio.
                 },
                 onOpenProfile = {
                     currentScreen = "profile"
                 },
                 onOpenPromotions = {
                     currentScreen = "promotions"
-                }
-            )
-
-            // MENÚ
-            "menu" -> MenuScreen(
-                onBack = {
-                    currentScreen = "home"
-                },
-                onOpenCart = {
-                    currentScreen = "cart"
                 },
                 onOpenProduct = { id, name, description, price, emoji,
                                   category, protein, vegetarian,
                                   spicy, preparation, imageUrl ->
 
+                    // Guardar información del producto seleccionado
                     selectedProductId = id
                     selectedProductName = name
                     selectedProductDescription = description
@@ -171,10 +164,11 @@ fun AppNavigation() {
                 imageUrl = selectedProductImage,
 
                 onBack = {
-                    currentScreen = "menu"
+                    currentScreen = "home"
                 },
 
                 onAddToCart = { quantity ->
+
                     CartManager.addProduct(
                         productoId = selectedProductId,
                         name = selectedProductName,
@@ -184,12 +178,10 @@ fun AppNavigation() {
                         imageUrl = selectedProductImage.ifBlank { null },
                         quantity = quantity
                     )
+
                     currentScreen = "cart"
                 }
             )
-
-            // SUCURSALES
-            "branches" -> BranchesScreen()
 
             // CONTACTO
             "contact" -> ContactScreen()
@@ -214,22 +206,25 @@ fun AppNavigation() {
                 }
             )
 
-            // CHECKOUT (CheckoutScreen ya ejecuta createOrderAsync)
+            // CHECKOUT
             "checkout" -> CheckoutScreen(
                 onBack = {
                     currentScreen = "cart"
                 },
                 onConfirmOrder = { pickupTime, paymentMethod ->
+
                     currentOrder = OrderManager.createOrder(
                         pickupTime = pickupTime,
                         paymentMethod = paymentMethod
                     )
+
                     currentScreen = "confirmation"
                 }
             )
 
             // CONFIRMACIÓN
             "confirmation" -> currentOrder?.let { order ->
+
                 ConfirmationScreen(
                     order = order,
                     onGoHome = {
@@ -281,12 +276,11 @@ fun AppNavigation() {
     // PANTALLAS QUE TENDRÁN EL MENÚ LATERAL
     val drawerScreens = listOf(
         "home",
-        "menu",
-        "branches",
         "cart",
         "contact",
         "promotions",
-        "profile"
+        "profile",
+        "orders"
     )
 
     if (currentScreen in drawerScreens) {
@@ -300,6 +294,7 @@ fun AppNavigation() {
             screenContent()
         }
 
+        
     } else {
 
         screenContent()

@@ -1,28 +1,35 @@
 package com.example.clinetesushigo.ui.screens.home
 
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.clinetesushigo.data.network.RetrofitClient
 import com.example.clinetesushigo.data.repository.CartManager
+import com.example.clinetesushigo.ui.screens.menu.MenuProduct
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import kotlinx.coroutines.launch
 
 private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
@@ -30,13 +37,6 @@ private val DarkText = Color(0xFF252525)
 private val SoftBrown = Color(0xFF81776D)
 private val Beige = Color(0xFFE9E0D5)
 private val White = Color.White
-
-data class Product(
-    val name: String,
-    val description: String,
-    val price: String,
-    val emoji: String
-)
 
 data class Offer(
     val title: String,
@@ -50,13 +50,41 @@ fun HomeScreen(
     onOpenCart: () -> Unit,
     onOpenMenu: () -> Unit,
     onOpenProfile: () -> Unit,
-    onOpenPromotions: () -> Unit
+    onOpenPromotions: () -> Unit,
+    onOpenProduct: (
+        id: String,
+        name: String,
+        description: String,
+        price: Int,
+        emoji: String,
+        category: String,
+        protein: String,
+        vegetarian: Boolean,
+        spicy: Boolean,
+        preparation: String,
+        imageUrl: String
+    ) -> Unit = { _, _, _, _, _, _, _, _, _, _, _ -> }
 ) {
 
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var search by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("Todos") }
 
+    var products by remember {
+        mutableStateOf<List<MenuProduct>>(emptyList())
+    }
+
+    var isLoading by remember {
+        mutableStateOf(true)
+    }
+
+    var errorMessage by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    // PROMOCIONES ACTUALES
     val offers = listOf(
         Offer(
             title = "Sushi para compartir",
@@ -78,46 +106,71 @@ fun HomeScreen(
         )
     )
 
-    val categories = listOf(
-        "🍣 Sushi",
-        "🍜 Ramen",
-        "🍚 Yakimeshi",
-        "🥟 Entradas",
-        "🥤 Bebidas",
-        "🍰 Postres"
-    )
+    // CARGAR PRODUCTOS DEL BACKEND
+    suspend fun loadProducts() {
 
-    val products = listOf(
-        Product(
-            "California Roll",
-            "Rollo de sushi con surimi y aguacate",
-            "$95",
-            "🍣"
-        ),
-        Product(
-            "Philadelphia Roll",
-            "Salmón, queso crema y aguacate",
-            "$115",
-            "🍱"
-        ),
-        Product(
-            "Yakimeshi",
-            "Arroz frito con verduras y huevo",
-            "$85",
-            "🍚"
-        ),
-        Product(
-            "Gyozas",
-            "Empanaditas japonesas",
-            "$75",
-            "🥟"
-        )
-    )
+        isLoading = true
+        errorMessage = null
 
-    val filteredProducts = products.filter {
-        it.name.contains(search, ignoreCase = true)
+        try {
+
+            val response =
+                RetrofitClient.menuApiService.obtenerProductos()
+
+            if (response.isSuccessful) {
+
+                products = parseHomeProducts(response.body())
+
+            } else {
+
+                errorMessage =
+                    "No se pudieron cargar los platillos. Error ${response.code()}"
+
+            }
+
+        } catch (e: Exception) {
+
+            errorMessage = "No se pudo conectar con el servidor."
+
+        } finally {
+
+            isLoading = false
+        }
     }
 
+    LaunchedEffect(Unit) {
+        loadProducts()
+    }
+
+    // CATEGORÍAS DINÁMICAS
+    val categories = remember(products) {
+
+        val dynamicCategories = products
+            .map { it.category }
+            .filter { it.isNotBlank() }
+            .distinct()
+
+        listOf("Todos") + dynamicCategories
+    }
+
+    // FILTRADO DE PRODUCTOS
+    val filteredProducts = products.filter { product ->
+
+        val matchesSearch =
+            product.name.contains(search, ignoreCase = true) ||
+                    product.description.contains(search, ignoreCase = true)
+
+        val matchesCategory =
+            selectedCategory == "Todos" ||
+                    product.category.equals(
+                        selectedCategory,
+                        ignoreCase = true
+                    )
+
+        matchesSearch && matchesCategory
+    }
+
+    // CONTENIDO PRINCIPAL
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -127,7 +180,6 @@ fun HomeScreen(
     ) {
 
         // ENCABEZADO
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -145,16 +197,14 @@ fun HomeScreen(
 
             Text(
                 text = "¿Qué se te antoja hoy?",
-                fontSize = 25.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = DarkText
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
-
             Text(
                 text = "Descubre el auténtico sabor de Japón.",
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 color = SoftBrown
             )
         }
@@ -162,7 +212,6 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(22.dp))
 
         // BUSCADOR
-
         OutlinedTextField(
             value = search,
             onValueChange = { search = it },
@@ -196,10 +245,9 @@ fun HomeScreen(
             )
         )
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(27.dp))
 
-        // CARRUSEL DE OFERTAS
-
+        // PROMOCIONES
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -209,6 +257,7 @@ fun HomeScreen(
         ) {
 
             Column {
+
                 Text(
                     text = "Ofertas especiales",
                     fontSize = 21.sp,
@@ -236,6 +285,7 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(15.dp))
 
+        // TARJETAS DE PROMOCIONES
         LazyRow(
             contentPadding = PaddingValues(horizontal = 22.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -245,13 +295,12 @@ fun HomeScreen(
 
                 Card(
                     modifier = Modifier
-                        .width(285.dp)
-                        .height(185.dp)
+                        .width(280.dp)
+                        .height(170.dp)
                         .clickable {
                             onOpenPromotions()
                         },
-                    shape = RoundedCornerShape(20.dp),
-                    elevation = CardDefaults.cardElevation(3.dp)
+                    shape = RoundedCornerShape(19.dp)
                 ) {
 
                     Box(
@@ -272,7 +321,7 @@ fun HomeScreen(
                                     Brush.verticalGradient(
                                         colors = listOf(
                                             Color.Transparent,
-                                            Color.Black.copy(alpha = 0.82f)
+                                            Color.Black.copy(alpha = 0.85f)
                                         )
                                     )
                                 )
@@ -281,13 +330,14 @@ fun HomeScreen(
                         Column(
                             modifier = Modifier
                                 .align(Alignment.BottomStart)
-                                .padding(17.dp)
+                                .padding(16.dp)
                         ) {
 
                             Surface(
                                 color = WineRed,
                                 shape = RoundedCornerShape(6.dp)
                             ) {
+
                                 Text(
                                     text = offer.label,
                                     modifier = Modifier.padding(
@@ -300,18 +350,18 @@ fun HomeScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(7.dp))
 
                             Text(
                                 text = offer.title,
                                 color = White,
-                                fontSize = 19.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
 
                             Text(
                                 text = offer.description,
-                                color = White.copy(alpha = 0.9f),
+                                color = White,
                                 fontSize = 11.sp
                             )
                         }
@@ -320,71 +370,14 @@ fun HomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
-
-        // CATEGORÍAS
-
-        Column {
-
-            Text(
-                text = "Explora nuestro menú",
-                modifier = Modifier.padding(horizontal = 22.dp),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
-
-            Spacer(modifier = Modifier.height(5.dp))
-
-            Text(
-                text = "Encuentra algo perfecto para ti",
-                modifier = Modifier.padding(horizontal = 22.dp),
-                fontSize = 12.sp,
-                color = SoftBrown
-            )
-
-            Spacer(modifier = Modifier.height(15.dp))
-
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 22.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-
-                items(categories) { category ->
-
-                    Surface(
-                        modifier = Modifier.clickable {
-                            onOpenMenu()
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        color = White,
-                        border = BorderStroke(1.dp, Beige)
-                    ) {
-
-                        Text(
-                            text = category,
-                            modifier = Modifier.padding(
-                                horizontal = 15.dp,
-                                vertical = 12.dp
-                            ),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = DarkText
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(27.dp))
 
         // BANNER DESTACADO
-
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 22.dp),
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(19.dp),
             colors = CardDefaults.cardColors(
                 containerColor = WineRed
             )
@@ -393,7 +386,7 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(19.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
@@ -414,156 +407,191 @@ fun HomeScreen(
                     Text(
                         text = "El placer de disfrutar cada bocado.",
                         color = White,
-                        fontSize = 20.sp,
+                        fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
-                        lineHeight = 25.sp
+                        lineHeight = 24.sp
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "Descubre nuestro menú",
+                        text = "Prepara tu próximo pedido.",
                         color = White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.clickable {
-                            onOpenMenu()
-                        }
+                        fontSize = 11.sp
                     )
                 }
 
                 Text(
                     text = "🍣",
-                    fontSize = 55.sp
+                    fontSize = 48.sp
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(27.dp))
 
-        // PRODUCTOS FAVORITOS
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 22.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // MENÚ INTEGRADO
+        Column(
+            modifier = Modifier.padding(horizontal = 22.dp)
         ) {
 
-            Column {
+            Text(
+                text = "Nuestro menú",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = DarkText
+            )
 
-                Text(
-                    text = "Nuestros favoritos",
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
-
-                Text(
-                    text = "Los sabores que no te puedes perder",
-                    fontSize = 12.sp,
-                    color = SoftBrown
-                )
-            }
+            Spacer(modifier = Modifier.height(5.dp))
 
             Text(
-                text = "Ver menú",
-                color = WineRed,
+                text = "Encuentra tu próximo platillo favorito.",
                 fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable {
-                    onOpenMenu()
-                }
+                color = SoftBrown
             )
+        }
+
+        Spacer(modifier = Modifier.height(15.dp))
+
+        // FILTROS DE CATEGORÍAS
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 22.dp),
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+
+            items(categories) { category ->
+
+                val selected = selectedCategory == category
+
+                FilterChip(
+                    selected = selected,
+                    onClick = {
+                        selectedCategory = category
+                    },
+                    label = {
+                        Text(
+                            text = category,
+                            fontSize = 12.sp
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = White,
+                        labelColor = DarkText,
+                        selectedContainerColor = WineRed,
+                        selectedLabelColor = White
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = selected,
+                        borderColor = Beige,
+                        selectedBorderColor = WineRed
+                    )
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(17.dp))
 
-        // LISTA DE PRODUCTOS
+        // PRODUCTOS DEL BACKEND
+        when {
 
-        filteredProducts.forEach { product ->
+            isLoading -> {
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 22.dp)
-                    .padding(bottom = 13.dp),
-                shape = RoundedCornerShape(17.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = White
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 1.dp
-                )
-            ) {
-
-                Row(
-                    modifier = Modifier.padding(15.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    contentAlignment = Alignment.Center
                 ) {
 
-                    Surface(
-                        modifier = Modifier.size(65.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        color = Cream
-                    ) {
+                    CircularProgressIndicator(
+                        color = WineRed
+                    )
+                }
+            }
 
-                        Box(
-                            contentAlignment = Alignment.Center
-                        ) {
+            errorMessage != null -> {
 
-                            Text(
-                                text = product.emoji,
-                                fontSize = 35.sp
-                            )
-                        }
-                    }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(22.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
 
-                    Spacer(modifier = Modifier.width(13.dp))
+                    Text(
+                        text = errorMessage.orEmpty(),
+                        color = SoftBrown,
+                        fontSize = 13.sp
+                    )
 
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-
-                        Text(
-                            text = product.name,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = DarkText
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = product.description,
-                            fontSize = 11.sp,
-                            color = SoftBrown,
-                            lineHeight = 15.sp
-                        )
-
-                        Spacer(modifier = Modifier.height(7.dp))
-
-                        Text(
-                            text = "${product.price} MXN",
-                            fontSize = 16.sp,
-                            color = WineRed,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(5.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Button(
                         onClick = {
+                            scope.launch {
+                                loadProducts()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = WineRed
+                        )
+                    ) {
+
+                        Text("Reintentar")
+                    }
+                }
+            }
+
+            filteredProducts.isEmpty() -> {
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(25.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = "No encontramos platillos.",
+                        color = SoftBrown,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+
+            else -> {
+
+                // TODOS LOS PLATILLOS
+                filteredProducts.forEach { product ->
+
+                    HomeProductCard(
+                        product = product,
+                        onProductClick = {
+
+                            onOpenProduct(
+                                product.id,
+                                product.name,
+                                product.description,
+                                product.price,
+                                product.emoji,
+                                product.category,
+                                product.protein,
+                                product.vegetarian,
+                                product.spicy,
+                                product.preparation,
+                                product.imageUrl.orEmpty()
+                            )
+                        },
+                        onAddClick = {
 
                             CartManager.addProduct(
+                                productoId = product.id,
                                 name = product.name,
                                 description = product.description,
-                                price = product.price
-                                    .removePrefix("$")
-                                    .toInt(),
-                                emoji = product.emoji
+                                price = product.price,
+                                emoji = product.emoji,
+                                imageUrl = product.imageUrl
                             )
 
                             Toast.makeText(
@@ -571,49 +599,21 @@ fun HomeScreen(
                                 "${product.name} agregado al carrito",
                                 Toast.LENGTH_SHORT
                             ).show()
-                        },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = WineRed
-                        ),
-                        contentPadding = PaddingValues(
-                            horizontal = 11.dp,
-                            vertical = 7.dp
-                        )
-                    ) {
-
-                        Text(
-                            text = "+",
-                            fontSize = 18.sp,
-                            color = White
-                        )
-                    }
+                        }
+                    )
                 }
             }
         }
 
-        if (filteredProducts.isEmpty()) {
-
-            Text(
-                text = "No encontramos productos.",
-                color = SoftBrown,
-                modifier = Modifier.padding(
-                    horizontal = 22.dp,
-                    vertical = 20.dp
-                )
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(25.dp))
 
         // PIE DE PÁGINA
-
         HorizontalDivider(
             modifier = Modifier.padding(horizontal = 22.dp),
             color = Beige
         )
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(17.dp))
 
         Text(
             text = "SUSHIGO",
@@ -624,7 +624,7 @@ fun HomeScreen(
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(7.dp))
 
         Text(
             text = "Sabor japonés en cada momento.",
@@ -632,5 +632,299 @@ fun HomeScreen(
             color = SoftBrown,
             fontSize = 11.sp
         )
+    }
+}
+
+// TARJETA DE PRODUCTO
+@Composable
+private fun HomeProductCard(
+    product: MenuProduct,
+    onProductClick: () -> Unit,
+    onAddClick: () -> Unit
+) {
+
+    val resolvedImage =
+        RetrofitClient.resolveImageUrl(product.imageUrl)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 22.dp,
+                vertical = 6.dp
+            )
+            .clickable {
+                onProductClick()
+            },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = White
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp
+        )
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            // IMAGEN
+            Surface(
+                modifier = Modifier
+                    .size(75.dp)
+                    .clip(RoundedCornerShape(13.dp)),
+                shape = RoundedCornerShape(13.dp),
+                color = Cream
+            ) {
+
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    if (!resolvedImage.isNullOrBlank()) {
+
+                        AsyncImage(
+                            model = resolvedImage,
+                            contentDescription = product.name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+
+                    } else {
+
+                        Text(
+                            text = product.emoji,
+                            fontSize = 34.sp
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.width(13.dp))
+
+            // INFORMACIÓN
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = product.name,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = product.description,
+                    fontSize = 11.sp,
+                    color = SoftBrown,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(7.dp))
+
+                Text(
+                    text = "$${product.price} MXN",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = WineRed
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // AGREGAR AL CARRITO
+            Surface(
+                onClick = onAddClick,
+                shape = CircleShape,
+                color = WineRed,
+                modifier = Modifier.size(36.dp)
+            ) {
+
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = "+",
+                        fontSize = 21.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = White
+                    )
+                }
+            }
+        }
+    }
+}
+
+// CONVERTIR RESPUESTA DEL BACKEND
+private fun parseHomeProducts(
+    element: JsonElement?
+): List<MenuProduct> {
+
+    if (element == null) return emptyList()
+
+    val array = when {
+
+        element.isJsonArray -> element.asJsonArray
+
+        element.isJsonObject -> {
+
+            val obj = element.asJsonObject
+
+            when {
+
+                obj.has("productos") &&
+                        obj.get("productos").isJsonArray ->
+                    obj.getAsJsonArray("productos")
+
+                obj.has("data") &&
+                        obj.get("data").isJsonArray ->
+                    obj.getAsJsonArray("data")
+
+                obj.has("data") &&
+                        obj.get("data").isJsonObject -> {
+
+                    val dataObj = obj.getAsJsonObject("data")
+
+                    if (
+                        dataObj.has("productos") &&
+                        dataObj.get("productos").isJsonArray
+                    ) {
+
+                        dataObj.getAsJsonArray("productos")
+
+                    } else return emptyList()
+                }
+
+                else -> return emptyList()
+            }
+        }
+
+        else -> return emptyList()
+    }
+
+    val list = mutableListOf<MenuProduct>()
+
+    for (entry in array) {
+
+        if (!entry.isJsonObject) continue
+
+        val obj = entry.asJsonObject
+
+        val disponible =
+            obj.get("estaDisponible")
+                ?.takeIf { !it.isJsonNull }
+                ?.asBoolean ?: true
+
+        if (!disponible) continue
+
+        val id =
+            obj.get("id")
+                ?.takeIf { !it.isJsonNull }
+                ?.asString.orEmpty()
+
+        val name =
+            obj.get("nombre")
+                ?.takeIf { !it.isJsonNull }
+                ?.asString ?: "Platillo"
+
+        val description =
+            obj.get("descripcion")
+                ?.takeIf { !it.isJsonNull }
+                ?.asString.orEmpty()
+
+        val price =
+            obj.get("precio")
+                ?.takeIf { !it.isJsonNull }
+                ?.asDouble?.toInt() ?: 0
+
+        val imageUrl =
+            obj.get("urlImagen")
+                ?.takeIf { !it.isJsonNull }
+                ?.asString
+
+        val category = extractHomeCategory(obj)
+
+        val emoji = when (category.lowercase()) {
+
+            "sushi", "rollos" -> "🍣"
+            "entradas" -> "🥟"
+            "bebidas" -> "🍵"
+            "postres" -> "🍡"
+            "ramen" -> "🍜"
+            "yakimeshi" -> "🍚"
+
+            else -> "🍱"
+        }
+
+        val protein =
+            obj.get("proteina")
+                ?.takeIf { !it.isJsonNull }
+                ?.asString ?: "Mixto"
+
+        val vegetarian =
+            obj.get("esVegetariano")
+                ?.takeIf { !it.isJsonNull }
+                ?.asBoolean ?: false
+
+        val spicy =
+            obj.get("esPicante")
+                ?.takeIf { !it.isJsonNull }
+                ?.asBoolean ?: false
+
+        val preparation =
+            obj.get("tiempoPreparacion")
+                ?.takeIf { !it.isJsonNull }
+                ?.asString ?: "15 min"
+
+        list.add(
+            MenuProduct(
+                id = id,
+                name = name,
+                description = description,
+                price = price,
+                emoji = emoji,
+                category = category,
+                protein = protein,
+                vegetarian = vegetarian,
+                spicy = spicy,
+                preparation = preparation,
+                imageUrl = imageUrl
+            )
+        )
+    }
+
+    return list
+}
+
+// OBTENER CATEGORÍA
+private fun extractHomeCategory(
+    obj: JsonObject
+): String {
+
+    val category = obj.get("categoria")
+        ?: return "Platillos"
+
+    return when {
+
+        category.isJsonObject -> {
+
+            category.asJsonObject
+                .get("nombre")
+                ?.takeIf { !it.isJsonNull }
+                ?.asString ?: "Platillos"
+        }
+
+        category.isJsonPrimitive -> category.asString
+
+        else -> "Platillos"
     }
 }

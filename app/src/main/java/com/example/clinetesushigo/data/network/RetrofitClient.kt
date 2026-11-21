@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    const val BASE_URL = "http://192.168.137.114:3000/"
+    const val BASE_URL = "http://192.168.100.28:3000/"
 
     private var tokenManager: TokenManager? = null
 

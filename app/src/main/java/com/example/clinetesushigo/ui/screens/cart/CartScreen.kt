@@ -47,37 +47,24 @@ fun CartScreen(
             .background(Cream)
     ) {
         // ENCABEZADO
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 22.dp, vertical = 20.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 22.dp, vertical = 20.dp)
         ) {
-            TextButton(
-                onClick = onBack,
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text(
-                    text = "← Regresar",
-                    color = WineRed,
-                    fontSize = 14.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
             Text(
                 text = "Mi carrito",
-                fontSize = 24.sp,
+                fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
                 color = DarkText
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             Text(
-                text = "🛒",
-                fontSize = 20.sp
+                text = "Revisa tus productos antes de continuar.",
+                fontSize = 13.sp,
+                color = SoftBrown
             )
         }
 

@@ -17,7 +17,6 @@ private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
 private val DarkText = Color(0xFF252525)
 private val SoftBrown = Color(0xFF81776D)
-private val Beige = Color(0xFFE9E0D5)
 private val White = Color(0xFFFFFFFF)
 
 @Composable
@@ -26,7 +25,6 @@ fun ProfileScreen(
     onViewOrders: () -> Unit,
     onLogout: () -> Unit
 ) {
-
     var name by remember { mutableStateOf("Cliente SushiGo") }
     var email by remember { mutableStateOf("cliente@email.com") }
     var phone by remember { mutableStateOf("") }
@@ -39,43 +37,20 @@ fun ProfileScreen(
             .padding(22.dp)
     ) {
 
-        // ENCABEZADO
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(onClick = onBack) {
-                Text(
-                    text = "‹",
-                    fontSize = 32.sp,
-                    color = DarkText
-                )
-            }
-
-            Text(
-                text = "Mi perfil",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
-        }
-
-        Spacer(modifier = Modifier.height(25.dp))
-
-        // AVATAR
+        // AVATAR Y DATOS DEL CLIENTE
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(15.dp))
+
             Surface(
                 modifier = Modifier.size(100.dp),
                 shape = CircleShape,
                 color = WineRed
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "👤",
-                        fontSize = 48.sp
-                    )
+                    Text("👤", fontSize = 48.sp)
                 }
             }
 
@@ -168,47 +143,6 @@ fun ProfileScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // MIS PEDIDOS
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(15.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = White
-            ),
-            onClick = onViewOrders
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "Mis pedidos",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = DarkText
-                    )
-
-                    Text(
-                        text = "Consulta tus compras anteriores",
-                        fontSize = 12.sp,
-                        color = SoftBrown
-                    )
-                }
-
-                Text(
-                    text = "›",
-                    fontSize = 27.sp,
-                    color = WineRed
-                )
             }
         }
 

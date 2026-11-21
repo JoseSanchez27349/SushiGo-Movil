@@ -1,15 +1,14 @@
 package com.example.clinetesushigo.ui.components
 
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.RestaurantMenu
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -50,9 +49,8 @@ fun SushiGoNavigationDrawer(
 
     val options = listOf(
         DrawerOption("Inicio", "home", Icons.Default.Home),
-        DrawerOption("Menú", "menu", Icons.Default.RestaurantMenu),
-        DrawerOption("Sucursales", "branches", Icons.Default.LocationOn),
         DrawerOption("Carrito", "cart", Icons.Default.ShoppingCart),
+        DrawerOption("Mis pedidos", "orders", Icons.Default.List),
         DrawerOption("Contacto", "contact", Icons.Default.Email),
         DrawerOption("Mi perfil", "profile", Icons.Default.Person)
     )
@@ -69,7 +67,6 @@ fun SushiGoNavigationDrawer(
                 ),
                 modifier = Modifier.width(300.dp)
             ) {
-
                 Spacer(modifier = Modifier.height(35.dp))
 
                 Column(
@@ -119,7 +116,6 @@ fun SushiGoNavigationDrawer(
                 )
 
                 options.forEach { option ->
-
                     NavigationDrawerItem(
                         label = {
                             Text(
@@ -174,7 +170,6 @@ fun SushiGoNavigationDrawer(
             }
         }
     ) {
-
         Scaffold(
             containerColor = Cream,
             topBar = {
@@ -207,7 +202,6 @@ fun SushiGoNavigationDrawer(
                 )
             }
         ) { innerPadding ->
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()

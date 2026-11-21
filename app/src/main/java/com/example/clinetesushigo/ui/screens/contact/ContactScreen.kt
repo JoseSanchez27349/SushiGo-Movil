@@ -1,20 +1,28 @@
 package com.example.clinetesushigo.ui.screens.contact
 
+import android.content.Intent
+import android.net.Uri
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
 
 private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
@@ -28,127 +36,24 @@ fun ContactScreen() {
 
     val context = LocalContext.current
 
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var message by remember { mutableStateOf("") }
+    val phone = "+523881036841"
+    val email = "sushi@sushigo.com"
+
+    val address =
+        "Av. Patria 191A, Villa Hermosa, 44490 Guadalajara, Jalisco, México"
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Cream)
             .verticalScroll(rememberScrollState())
-            .padding(22.dp)
+            .padding(horizontal = 20.dp, vertical = 22.dp)
     ) {
 
-        // ENCABEZADO
+        // INTRODUCCIÓN
         Text(
-            text = "Contáctanos",
-            fontSize = 27.sp,
-            fontWeight = FontWeight.Bold,
-            color = DarkText
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Nos encanta escucharte. Estamos aquí para ayudarte.",
-            fontSize = 14.sp,
-            color = SoftBrown,
-            lineHeight = 21.sp
-        )
-
-        Spacer(modifier = Modifier.height(25.dp))
-
-        // TARJETA DE ATENCIÓN AL CLIENTE
-        ContactCard(
-            emoji = "📞",
-            title = "Atención al cliente",
-            description = "¿Tienes alguna pregunta sobre tu pedido o nuestros productos?",
-            detail = "Nuestro equipo estará disponible próximamente para atenderte."
-        )
-
-        Spacer(modifier = Modifier.height(15.dp))
-
-        // TARJETA DE CORREO
-        ContactCard(
-            emoji = "✉️",
-            title = "Correo electrónico",
-            description = "¿Tienes alguna duda o sugerencia?",
-            detail = "Nuestro correo oficial estará disponible próximamente."
-        )
-
-        Spacer(modifier = Modifier.height(15.dp))
-
-        // TARJETA DE REDES SOCIALES
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = White
-            )
-        ) {
-
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
-
-                Text(
-                    text = "📱 Síguenos en redes sociales",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = WineRed
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Text(
-                    text = "Muy pronto podrás encontrarnos en nuestras redes sociales para conocer promociones, novedades y nuevos platillos.",
-                    fontSize = 13.sp,
-                    color = SoftBrown,
-                    lineHeight = 21.sp
-                )
-
-                Spacer(modifier = Modifier.height(15.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-
-                    SocialButton(
-                        name = "Instagram",
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    SocialButton(
-                        name = "Facebook",
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    SocialButton(
-                        name = "TikTok",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(15.dp))
-
-        // HORARIO DE ATENCIÓN
-        ContactCard(
-            emoji = "🕒",
-            title = "Horario de atención",
-            description = "Queremos atenderte de la mejor manera.",
-            detail = "Los horarios oficiales de atención se definirán próximamente."
-        )
-
-        Spacer(modifier = Modifier.height(27.dp))
-
-        // FORMULARIO DE CONTACTO
-        Text(
-            text = "Envíanos un mensaje",
-            fontSize = 20.sp,
+            text = "¡Estamos para atenderte!",
+            fontSize = 23.sp,
             fontWeight = FontWeight.Bold,
             color = DarkText
         )
@@ -156,284 +61,594 @@ fun ContactScreen() {
         Spacer(modifier = Modifier.height(7.dp))
 
         Text(
-            text = "Comparte tus dudas, comentarios o sugerencias con nosotros.",
+            text = "Queremos que disfrutes cada momento con SushiGo. Contáctanos o visítanos.",
             fontSize = 13.sp,
             color = SoftBrown,
             lineHeight = 20.sp
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(25.dp))
+
+        // TÍTULO CONTACTO
+        SectionTitle(
+            title = "Contacto",
+            subtitle = "Estamos a un mensaje de distancia."
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // TELÉFONO
+        ContactInfoCard(
+            icon = "☎",
+            title = "Teléfono",
+            detail = "+52 388 103 6841",
+            description = "Comunícate con nuestro equipo.",
+            buttonText = "LLAMAR",
+            onClick = {
+                val intent = Intent(
+                    Intent.ACTION_DIAL,
+                    Uri.parse("tel:$phone")
+                )
+                context.startActivity(intent)
+            }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // CORREO
+        ContactInfoCard(
+            icon = "✉",
+            title = "Correo electrónico",
+            detail = email,
+            description = "Envíanos tus dudas o sugerencias.",
+            buttonText = "ENVIAR CORREO",
+            onClick = {
+                val intent = Intent(
+                    Intent.ACTION_SENDTO,
+                    Uri.parse("mailto:$email")
+                )
+                context.startActivity(intent)
+            }
+        )
+
+        Spacer(modifier = Modifier.height(27.dp))
+
+        // REDES SOCIALES
+        SectionTitle(
+            title = "Síguenos",
+            subtitle = "Encuéntranos en nuestras redes sociales."
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 containerColor = White
-            )
+            ),
+            elevation = CardDefaults.cardElevation(2.dp)
         ) {
 
             Column(
                 modifier = Modifier.padding(18.dp)
             ) {
 
-                // NOMBRE
-                Text(
-                    text = "Nombre",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = DarkText
+                // INSTAGRAM
+                SocialInfo(
+                    symbol = "◎",
+                    name = "Instagram",
+                    username = "@sushigo.mx",
+                    iconColor = Color(0xFFC13584)
                 )
 
-                Spacer(modifier = Modifier.height(7.dp))
-
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = {
-                        Text("Escribe tu nombre")
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = WineRed,
-                        unfocusedBorderColor = Beige,
-                        focusedContainerColor = White,
-                        unfocusedContainerColor = White
-                    )
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 14.dp),
+                    color = Beige
                 )
+
+                // FACEBOOK
+                SocialInfo(
+                    symbol = "f",
+                    name = "Facebook",
+                    username = "SushiGo México",
+                    iconColor = Color(0xFF1877F2)
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 14.dp),
+                    color = Beige
+                )
+
+                // TIKTOK
+                SocialInfo(
+                    symbol = "♪",
+                    name = "TikTok",
+                    username = "@sushigo.oficial",
+                    iconColor = DarkText
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(27.dp))
+
+        // HORARIOS
+        SectionTitle(
+            title = "Horario de atención",
+            subtitle = "¡Te esperamos!"
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = White
+            ),
+            elevation = CardDefaults.cardElevation(2.dp)
+        ) {
+
+            Column(
+                modifier = Modifier.padding(19.dp)
+            ) {
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Surface(
+                        shape = RoundedCornerShape(13.dp),
+                        color = Cream
+                    ) {
+
+                        Text(
+                            text = "🕒",
+                            modifier = Modifier.padding(12.dp),
+                            fontSize = 25.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(13.dp))
+
+                    Column {
+
+                        Text(
+                            text = "Estamos listos para recibirte",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DarkText
+                        )
+
+                        Text(
+                            text = "Lunes a domingo",
+                            fontSize = 12.sp,
+                            color = SoftBrown
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                HorizontalDivider(color = Beige)
 
                 Spacer(modifier = Modifier.height(15.dp))
 
-                // CORREO
-                Text(
-                    text = "Correo electrónico",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = DarkText
-                )
-
-                Spacer(modifier = Modifier.height(7.dp))
-
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = {
-                        Text("ejemplo@correo.com")
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = WineRed,
-                        unfocusedBorderColor = Beige,
-                        focusedContainerColor = White,
-                        unfocusedContainerColor = White
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(15.dp))
-
-                // MENSAJE
-                Text(
-                    text = "Mensaje",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = DarkText
-                )
-
-                Spacer(modifier = Modifier.height(7.dp))
-
-                OutlinedTextField(
-                    value = message,
-                    onValueChange = { message = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(125.dp),
-                    placeholder = {
-                        Text("Escribe aquí tu mensaje...")
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = WineRed,
-                        unfocusedBorderColor = Beige,
-                        focusedContainerColor = White,
-                        unfocusedContainerColor = White
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // BOTÓN ENVIAR
-                Button(
-                    onClick = {
-
-                        val validEmail = android.util.Patterns.EMAIL_ADDRESS
-                            .matcher(email.trim())
-                            .matches()
-
-                        when {
-                            name.isBlank() ||
-                                    email.isBlank() ||
-                                    message.isBlank() -> {
-                                Toast.makeText(
-                                    context,
-                                    "Completa todos los campos.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-
-                            !validEmail -> {
-                                Toast.makeText(
-                                    context,
-                                    "Ingresa un correo electrónico válido.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-
-                            else -> {
-                                Toast.makeText(
-                                    context,
-                                    "El formulario aún no está conectado al servidor.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = WineRed
-                    )
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
 
                     Text(
-                        text = "ENVIAR MENSAJE",
+                        text = "Horario",
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
+                        fontWeight = FontWeight.SemiBold,
+                        color = DarkText
+                    )
+
+                    Text(
+                        text = "12:00 p.m. - 10:00 p.m.",
+                        fontSize = 13.sp,
+                        color = SoftBrown
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(25.dp))
+        Spacer(modifier = Modifier.height(27.dp))
 
-        // PIE DE PANTALLA
-        HorizontalDivider(color = Beige)
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Text(
-            text = "SUSHIGO",
-            modifier = Modifier.fillMaxWidth(),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = WineRed
+        // SUCURSAL
+        SectionTitle(
+            title = "Nuestra sucursal",
+            subtitle = "Ven a disfrutar el sabor de SushiGo."
         )
 
-        Spacer(modifier = Modifier.height(5.dp))
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = White
+            ),
+            elevation = CardDefaults.cardElevation(3.dp)
+        ) {
+
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+
+                // ENCABEZADO
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Surface(
+                        modifier = Modifier.size(62.dp),
+                        shape = RoundedCornerShape(17.dp),
+                        color = Color(0xFFF2E8E4)
+                    ) {
+
+                        Box(
+                            contentAlignment = Alignment.Center
+                        ) {
+
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Ubicación",
+                                tint = WineRed,
+                                modifier = Modifier.size(34.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column {
+
+                        Text(
+                            text = "SushiGo Guadalajara",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = WineRed
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = "Nuestra ubicación",
+                            fontSize = 12.sp,
+                            color = SoftBrown
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(22.dp))
+
+                HorizontalDivider(color = Beige)
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // DIRECCIÓN
+                Text(
+                    text = "DIRECCIÓN",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.5.sp,
+                    color = SoftBrown
+                )
+
+                Spacer(modifier = Modifier.height(9.dp))
+
+                Text(
+                    text = address,
+                    fontSize = 15.sp,
+                    color = DarkText,
+                    lineHeight = 23.sp
+                )
+
+                Spacer(modifier = Modifier.height(19.dp))
+
+                // INFORMACIÓN DE UBICACIÓN
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(13.dp),
+                    color = Cream
+                ) {
+
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Text(
+                            text = "📍",
+                            fontSize = 22.sp
+                        )
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        Column {
+
+                            Text(
+                                text = "Visítanos",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DarkText
+                            )
+
+                            Text(
+                                text = "Te esperamos en nuestra sucursal.",
+                                fontSize = 11.sp,
+                                color = SoftBrown
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(19.dp))
+
+                // CÓMO LLEGAR
+                Button(
+                    onClick = {
+
+                        val mapUrl =
+                            "https://www.google.com/maps/search/?api=1&query=${Uri.encode(address)}"
+
+                        val intent = Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse(mapUrl)
+                        )
+
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(13.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = WineRed
+                    )
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = White
+                    )
+
+                    Spacer(modifier = Modifier.width(9.dp))
+
+                    Text(
+                        text = "CÓMO LLEGAR",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        color = White
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(30.dp))
+
+        // PIE DE PÁGINA
+        HorizontalDivider(color = Beige)
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(
+            text = "🍣 SushiGo",
+            modifier = Modifier.fillMaxWidth(),
+            fontSize = 25.sp,
+            fontWeight = FontWeight.Bold,
+            color = WineRed,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(7.dp))
 
         Text(
             text = "SABOR Y TRADICIÓN",
+            modifier = Modifier.fillMaxWidth(),
             fontSize = 10.sp,
             letterSpacing = 3.sp,
             fontWeight = FontWeight.Bold,
-            color = SoftBrown
+            color = SoftBrown,
+            textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(15.dp))
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
-// COMPONENTE DE TARJETAS DE CONTACTO
+
+// ==========================================
+// TÍTULOS DE SECCIÓN
+// ==========================================
+
 @Composable
-fun ContactCard(
-    emoji: String,
+private fun SectionTitle(
     title: String,
+    subtitle: String
+) {
+
+    Column {
+
+        Text(
+            text = title,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = DarkText
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = subtitle,
+            fontSize = 12.sp,
+            color = SoftBrown
+        )
+    }
+}
+
+
+// ==========================================
+// TARJETAS DE CONTACTO
+// ==========================================
+
+@Composable
+private fun ContactInfoCard(
+    icon: String,
+    title: String,
+    detail: String,
     description: String,
-    detail: String
+    buttonText: String,
+    onClick: () -> Unit
 ) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(19.dp),
         colors = CardDefaults.cardColors(
             containerColor = White
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
 
-        Row(
-            modifier = Modifier.padding(18.dp),
-            verticalAlignment = Alignment.Top
+        Column(
+            modifier = Modifier.padding(18.dp)
         ) {
 
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Surface(
+                    shape = RoundedCornerShape(13.dp),
+                    color = Color(0xFFF2E8E4)
+                ) {
+
+                    Text(
+                        text = icon,
+                        modifier = Modifier.padding(13.dp),
+                        fontSize = 23.sp,
+                        color = WineRed
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(13.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        text = title,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText
+                    )
+
+                    Spacer(modifier = Modifier.height(3.dp))
+
+                    Text(
+                        text = detail,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = WineRed
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(9.dp))
+
             Text(
-                text = emoji,
-                fontSize = 27.sp
+                text = description,
+                fontSize = 12.sp,
+                color = SoftBrown
             )
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.height(13.dp))
 
-            Column {
+            OutlinedButton(
+                onClick = onClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(43.dp),
+                shape = RoundedCornerShape(11.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = WineRed
+                )
+            ) {
 
                 Text(
-                    text = title,
-                    fontSize = 16.sp,
+                    text = buttonText,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = WineRed
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = description,
-                    fontSize = 13.sp,
-                    color = DarkText,
-                    lineHeight = 19.sp
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = detail,
-                    fontSize = 12.sp,
-                    color = SoftBrown,
-                    lineHeight = 18.sp
+                    letterSpacing = 1.sp
                 )
             }
         }
     }
 }
 
-// BOTONES DE REDES SOCIALES
+
+// ==========================================
+// REDES SOCIALES
+// ==========================================
+
 @Composable
-fun SocialButton(
+private fun SocialInfo(
+    symbol: String,
     name: String,
-    modifier: Modifier = Modifier
+    username: String,
+    iconColor: Color
 ) {
 
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(10.dp),
-        color = Color(0xFFF2E8E4)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
-        Text(
-            text = name,
-            modifier = Modifier.padding(
-                horizontal = 5.dp,
-                vertical = 12.dp
-            ),
-            fontSize = 10.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = WineRed,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
+        Surface(
+            modifier = Modifier.size(43.dp),
+            shape = CircleShape,
+            color = iconColor.copy(alpha = 0.10f)
+        ) {
+
+            Box(
+                contentAlignment = Alignment.Center
+            ) {
+
+                Text(
+                    text = symbol,
+                    fontSize = 25.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = iconColor
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(13.dp))
+
+        Column {
+
+            Text(
+                text = name,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = DarkText
+            )
+
+            Text(
+                text = username,
+                fontSize = 12.sp,
+                color = SoftBrown
+            )
+        }
     }
 }
