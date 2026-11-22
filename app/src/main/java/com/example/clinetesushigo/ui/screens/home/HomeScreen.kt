@@ -1,6 +1,7 @@
 package com.example.clinetesushigo.ui.screens.home
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,11 +20,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.clinetesushigo.R
 import com.example.clinetesushigo.data.network.RetrofitClient
 import com.example.clinetesushigo.data.repository.CartManager
 import com.example.clinetesushigo.ui.screens.menu.MenuProduct
@@ -372,61 +375,22 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(27.dp))
 
-        // BANNER DESTACADO
-        Card(
+        // BANNER DESTACADO CON IMAGEN DE SUSHIGO
+        Image(
+            painter = painterResource(
+                id = R.drawable.banner_experiencia
+            ),
+            contentDescription = "Una experiencia única. El placer de disfrutar cada bocado. Prepara tu próximo pedido.",
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 22.dp),
-            shape = RoundedCornerShape(19.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = WineRed
-            )
-        ) {
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(19.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-
-                    Text(
-                        text = "UNA EXPERIENCIA ÚNICA",
-                        color = White.copy(alpha = 0.8f),
-                        fontSize = 9.sp,
-                        letterSpacing = 1.2.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "El placer de disfrutar cada bocado.",
-                        color = White,
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 24.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = "Prepara tu próximo pedido.",
-                        color = White,
-                        fontSize = 11.sp
-                    )
-                }
-
-                Text(
-                    text = "🍣",
-                    fontSize = 48.sp
-                )
-            }
-        }
+                .padding(horizontal = 22.dp)
+                .aspectRatio(16f / 9f)
+                .clip(RoundedCornerShape(19.dp))
+                .clickable {
+                    onOpenPromotions()
+                },
+            contentScale = ContentScale.Crop
+        )
 
         Spacer(modifier = Modifier.height(27.dp))
 
@@ -617,7 +581,9 @@ fun HomeScreen(
 
         Text(
             text = "SUSHIGO",
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 22.dp),
             color = SoftBrown,
             fontSize = 11.sp,
             letterSpacing = 3.sp,
@@ -628,7 +594,9 @@ fun HomeScreen(
 
         Text(
             text = "Sabor japonés en cada momento.",
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 22.dp),
             color = SoftBrown,
             fontSize = 11.sp
         )
@@ -672,7 +640,7 @@ private fun HomeProductCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // IMAGEN
+            // IMAGEN DEL PRODUCTO
             Surface(
                 modifier = Modifier
                     .size(75.dp)
@@ -706,7 +674,7 @@ private fun HomeProductCard(
 
             Spacer(modifier = Modifier.width(13.dp))
 
-            // INFORMACIÓN
+            // INFORMACIÓN DEL PRODUCTO
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -787,7 +755,7 @@ private fun parseHomeProducts(
 
                 obj.has("data") &&
                         obj.get("data").isJsonArray ->
-                    obj.getAsJsonArray("data")
+                    obj.get("data").asJsonArray
 
                 obj.has("data") &&
                         obj.get("data").isJsonObject -> {

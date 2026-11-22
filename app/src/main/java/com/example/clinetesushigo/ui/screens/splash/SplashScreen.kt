@@ -1,9 +1,9 @@
 package com.example.clinetesushigo.ui.screens.splash
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -11,10 +11,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.clinetesushigo.R
 
 private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
@@ -34,16 +37,18 @@ fun SplashScreen(onStart: () -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
 
-        // LOGOTIPO
+        // LOGOTIPO SUSHIGO
         Box(
             modifier = Modifier
                 .size(155.dp)
                 .background(Beige, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "🍣",
-                fontSize = 85.sp
+            Image(
+                painter = painterResource(id = R.drawable.sushigo_logo),
+                contentDescription = "Logo de SushiGo",
+                modifier = Modifier.size(135.dp),
+                contentScale = ContentScale.Fit
             )
         }
 
@@ -89,7 +94,7 @@ fun SplashScreen(onStart: () -> Unit) {
             colors = ButtonDefaults.buttonColors(
                 containerColor = WineRed
             ),
-            shape = RoundedCornerShape(16.dp)
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
         ) {
             Text(
                 text = "COMENZAR",

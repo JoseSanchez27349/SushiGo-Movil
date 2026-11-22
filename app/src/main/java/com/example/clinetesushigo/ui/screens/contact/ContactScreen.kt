@@ -3,33 +3,60 @@ package com.example.clinetesushigo.ui.screens.contact
 import android.content.Intent
 import android.net.Uri
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// ==========================================
+// COLORES SUSHIGO
+// ==========================================
+
 private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
+private val OliveGreen = Color(0xFF718B52)
 private val DarkText = Color(0xFF252525)
 private val SoftBrown = Color(0xFF81776D)
 private val Beige = Color(0xFFE9E0D5)
 private val White = Color.White
+
+// COLORES PASTEL DE REDES
+private val PastelPink = Color(0xFFF5E3E1)
+private val PastelBlue = Color(0xFFE3EBF3)
+private val PastelLilac = Color(0xFFECE5F2)
+
+// OTROS COLORES
+private val PastelCream = Color(0xFFF4EDE4)
+private val IconBackground = Color(0xFFF2E8E4)
+
+
+// ==========================================
+// PANTALLA DE CONTACTO
+// ==========================================
 
 @Composable
 fun ContactScreen() {
@@ -69,7 +96,7 @@ fun ContactScreen() {
 
         Spacer(modifier = Modifier.height(25.dp))
 
-        // TÍTULO CONTACTO
+        // CONTACTO
         SectionTitle(
             title = "Contacto",
             subtitle = "Estamos a un mensaje de distancia."
@@ -79,7 +106,7 @@ fun ContactScreen() {
 
         // TELÉFONO
         ContactInfoCard(
-            icon = "☎",
+            icon = Icons.Default.Phone,
             title = "Teléfono",
             detail = "+52 388 103 6841",
             description = "Comunícate con nuestro equipo.",
@@ -97,7 +124,7 @@ fun ContactScreen() {
 
         // CORREO
         ContactInfoCard(
-            icon = "✉",
+            icon = Icons.Default.Email,
             title = "Correo electrónico",
             detail = email,
             description = "Envíanos tus dudas o sugerencias.",
@@ -113,7 +140,10 @@ fun ContactScreen() {
 
         Spacer(modifier = Modifier.height(27.dp))
 
+        // ==================================
         // REDES SOCIALES
+        // ==================================
+
         SectionTitle(
             title = "Síguenos",
             subtitle = "Encuéntranos en nuestras redes sociales."
@@ -121,58 +151,41 @@ fun ContactScreen() {
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = White
-            ),
-            elevation = CardDefaults.cardElevation(2.dp)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            Column(
-                modifier = Modifier.padding(18.dp)
-            ) {
+            // INSTAGRAM
+            SocialInfo(
+                icon = Icons.Default.CameraAlt,
+                name = "Instagram",
+                username = "@sushigo.mx",
+                backgroundColor = PastelPink
+            )
 
-                // INSTAGRAM
-                SocialInfo(
-                    symbol = "◎",
-                    name = "Instagram",
-                    username = "@sushigo.mx",
-                    iconColor = Color(0xFFC13584)
-                )
+            // FACEBOOK
+            SocialInfo(
+                icon = Icons.Default.Groups,
+                name = "Facebook",
+                username = "SushiGo México",
+                backgroundColor = PastelBlue
+            )
 
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 14.dp),
-                    color = Beige
-                )
-
-                // FACEBOOK
-                SocialInfo(
-                    symbol = "f",
-                    name = "Facebook",
-                    username = "SushiGo México",
-                    iconColor = Color(0xFF1877F2)
-                )
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 14.dp),
-                    color = Beige
-                )
-
-                // TIKTOK
-                SocialInfo(
-                    symbol = "♪",
-                    name = "TikTok",
-                    username = "@sushigo.oficial",
-                    iconColor = DarkText
-                )
-            }
+            // TIKTOK
+            SocialInfo(
+                icon = Icons.Default.MusicNote,
+                name = "TikTok",
+                username = "@sushigo.oficial",
+                backgroundColor = PastelLilac
+            )
         }
 
         Spacer(modifier = Modifier.height(27.dp))
 
+        // ==================================
         // HORARIOS
+        // ==================================
+
         SectionTitle(
             title = "Horario de atención",
             subtitle = "¡Te esperamos!"
@@ -182,9 +195,9 @@ fun ContactScreen() {
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(22.dp),
             colors = CardDefaults.cardColors(
-                containerColor = White
+                containerColor = PastelCream
             ),
             elevation = CardDefaults.cardElevation(2.dp)
         ) {
@@ -197,17 +210,12 @@ fun ContactScreen() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    Surface(
-                        shape = RoundedCornerShape(13.dp),
-                        color = Cream
-                    ) {
-
-                        Text(
-                            text = "🕒",
-                            modifier = Modifier.padding(12.dp),
-                            fontSize = 25.sp
-                        )
-                    }
+                    // RECUADRO BLANCO DEL RELOJ
+                    IconContainer(
+                        icon = Icons.Default.AccessTime,
+                        size = 55.dp,
+                        backgroundColor = White
+                    )
 
                     Spacer(modifier = Modifier.width(13.dp))
 
@@ -258,7 +266,10 @@ fun ContactScreen() {
 
         Spacer(modifier = Modifier.height(27.dp))
 
+        // ==================================
         // SUCURSAL
+        // ==================================
+
         SectionTitle(
             title = "Nuestra sucursal",
             subtitle = "Ven a disfrutar el sabor de SushiGo."
@@ -279,29 +290,14 @@ fun ContactScreen() {
                 modifier = Modifier.padding(20.dp)
             ) {
 
-                // ENCABEZADO
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    Surface(
-                        modifier = Modifier.size(62.dp),
-                        shape = RoundedCornerShape(17.dp),
-                        color = Color(0xFFF2E8E4)
-                    ) {
-
-                        Box(
-                            contentAlignment = Alignment.Center
-                        ) {
-
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = "Ubicación",
-                                tint = WineRed,
-                                modifier = Modifier.size(34.dp)
-                            )
-                        }
-                    }
+                    IconContainer(
+                        icon = Icons.Default.LocationOn,
+                        size = 62.dp
+                    )
 
                     Spacer(modifier = Modifier.width(14.dp))
 
@@ -330,7 +326,6 @@ fun ContactScreen() {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // DIRECCIÓN
                 Text(
                     text = "DIRECCIÓN",
                     fontSize = 11.sp,
@@ -350,11 +345,11 @@ fun ContactScreen() {
 
                 Spacer(modifier = Modifier.height(19.dp))
 
-                // INFORMACIÓN DE UBICACIÓN
+                // VISÍTANOS
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(13.dp),
-                    color = Cream
+                    shape = RoundedCornerShape(15.dp),
+                    color = PastelCream
                 ) {
 
                     Row(
@@ -362,9 +357,11 @@ fun ContactScreen() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
-                        Text(
-                            text = "📍",
-                            fontSize = 22.sp
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Ubicación",
+                            tint = WineRed,
+                            modifier = Modifier.size(25.dp)
                         )
 
                         Spacer(modifier = Modifier.width(10.dp))
@@ -431,21 +428,51 @@ fun ContactScreen() {
             }
         }
 
+        Spacer(modifier = Modifier.height(27.dp))
+
+        // ==================================
+        // PREGUNTAS FRECUENTES
+        // ==================================
+
+        SectionTitle(
+            title = "Preguntas frecuentes",
+            subtitle = "Resolvemos tus dudas para que disfrutes SushiGo."
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        FrequentlyAskedQuestions()
+
         Spacer(modifier = Modifier.height(30.dp))
 
+        // ==================================
         // PIE DE PÁGINA
+        // ==================================
+
         HorizontalDivider(color = Beige)
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text(
-            text = "🍣 SushiGo",
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            fontSize = 25.sp,
-            fontWeight = FontWeight.Bold,
-            color = WineRed,
-            textAlign = TextAlign.Center
-        )
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Text(
+                text = "Sushi",
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Bold,
+                color = WineRed
+            )
+
+            Text(
+                text = "Go",
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Bold,
+                color = OliveGreen
+            )
+        }
 
         Spacer(modifier = Modifier.height(7.dp))
 
@@ -460,6 +487,39 @@ fun ContactScreen() {
         )
 
         Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+
+// ==========================================
+// CONTENEDOR DE ICONOS
+// ==========================================
+
+@Composable
+private fun IconContainer(
+    icon: ImageVector,
+    size: androidx.compose.ui.unit.Dp = 50.dp,
+    backgroundColor: Color = IconBackground,
+    iconColor: Color = WineRed
+) {
+
+    Surface(
+        modifier = Modifier.size(size),
+        shape = RoundedCornerShape(17.dp),
+        color = backgroundColor
+    ) {
+
+        Box(
+            contentAlignment = Alignment.Center
+        ) {
+
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.size(size * 0.48f)
+            )
+        }
     }
 }
 
@@ -500,7 +560,7 @@ private fun SectionTitle(
 
 @Composable
 private fun ContactInfoCard(
-    icon: String,
+    icon: ImageVector,
     title: String,
     detail: String,
     description: String,
@@ -525,18 +585,10 @@ private fun ContactInfoCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                Surface(
-                    shape = RoundedCornerShape(13.dp),
-                    color = Color(0xFFF2E8E4)
-                ) {
-
-                    Text(
-                        text = icon,
-                        modifier = Modifier.padding(13.dp),
-                        fontSize = 23.sp,
-                        color = WineRed
-                    )
-                }
+                IconContainer(
+                    icon = icon,
+                    size = 55.dp
+                )
 
                 Spacer(modifier = Modifier.width(13.dp))
 
@@ -596,59 +648,182 @@ private fun ContactInfoCard(
 
 
 // ==========================================
-// REDES SOCIALES
+// TARJETAS INDIVIDUALES DE REDES
 // ==========================================
 
 @Composable
 private fun SocialInfo(
-    symbol: String,
+    icon: ImageVector,
     name: String,
     username: String,
-    iconColor: Color
+    backgroundColor: Color
 ) {
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 52.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = backgroundColor
+        ),
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
 
-        Surface(
-            modifier = Modifier.size(43.dp),
-            shape = CircleShape,
-            color = iconColor.copy(alpha = 0.10f)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Box(
-                contentAlignment = Alignment.Center
+            // LOGO BLANCO
+            Surface(
+                modifier = Modifier.size(58.dp),
+                shape = RoundedCornerShape(17.dp),
+                color = White
             ) {
 
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = name,
+                        tint = WineRed,
+                        modifier = Modifier.size(27.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column {
+
                 Text(
-                    text = symbol,
-                    fontSize = 25.sp,
+                    text = name,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = iconColor
+                    color = DarkText
+                )
+
+                Text(
+                    text = username,
+                    fontSize = 13.sp,
+                    color = SoftBrown
                 )
             }
         }
+    }
+}
 
-        Spacer(modifier = Modifier.width(13.dp))
 
-        Column {
+// ==========================================
+// PREGUNTAS FRECUENTES
+// ==========================================
 
-            Text(
-                text = name,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
+@Composable
+private fun FrequentlyAskedQuestions() {
 
-            Text(
-                text = username,
-                fontSize = 12.sp,
-                color = SoftBrown
-            )
+    var expandedQuestion by remember {
+        mutableStateOf<Int?>(null)
+    }
+
+    val questions = listOf(
+
+        "¿Cómo puedo realizar un pedido?" to
+                "Entra a nuestro menú, selecciona tus platillos favoritos, agrégalos al carrito y continúa con el proceso de compra.",
+
+        "¿Puedo recoger mi pedido en el restaurante?" to
+                "¡Claro! Puedes seleccionar la opción de recoger en el restaurante al realizar tu pedido.",
+
+        "¿Qué métodos de pago aceptan?" to
+                "Puedes elegir entre efectivo o tarjeta, de acuerdo con las opciones disponibles al realizar tu pedido.",
+
+        "¿Dónde puedo consultar mis pedidos?" to
+                "Entra a tu perfil y selecciona la sección Mis pedidos para consultar tu historial.",
+
+        "¿Cómo puedo comunicarme con SushiGo?" to
+                "Puedes llamarnos al +52 388 103 6841 o escribirnos a sushi@sushigo.com.",
+
+        "¿Dónde se encuentra el restaurante?" to
+                "Nuestra sucursal se encuentra en Av. Patria 191A, Villa Hermosa, 44490 Guadalajara, Jalisco."
+    )
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+
+        questions.forEachIndexed { index, question ->
+
+            val expanded = expandedQuestion == index
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize()
+                    .clickable {
+                        expandedQuestion =
+                            if (expanded) null else index
+                    },
+                shape = RoundedCornerShape(15.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = White
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 2.dp
+                )
+            ) {
+
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Text(
+                            text = question.first,
+                            modifier = Modifier.weight(1f),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = DarkText
+                        )
+
+                        Icon(
+                            imageVector = if (expanded)
+                                Icons.Default.KeyboardArrowUp
+                            else
+                                Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (expanded)
+                                "Cerrar respuesta"
+                            else
+                                "Mostrar respuesta",
+                            tint = WineRed
+                        )
+                    }
+
+                    if (expanded) {
+
+                        Spacer(
+                            modifier = Modifier.height(12.dp)
+                        )
+
+                        HorizontalDivider(color = Beige)
+
+                        Spacer(
+                            modifier = Modifier.height(12.dp)
+                        )
+
+                        Text(
+                            text = question.second,
+                            fontSize = 12.sp,
+                            color = SoftBrown,
+                            lineHeight = 20.sp
+                        )
+                    }
+                }
+            }
         }
     }
 }

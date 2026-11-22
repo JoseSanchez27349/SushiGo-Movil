@@ -1,6 +1,7 @@
 package com.example.clinetesushigo.ui.screens.login
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -15,7 +16,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -23,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.clinetesushigo.R
 
 private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
@@ -44,17 +48,29 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Escuchar cambios de estado en la petición API
+    // ESCUCHAR CAMBIOS DE ESTADO DE LA API
     LaunchedEffect(uiState) {
         when (val state = uiState) {
             is LoginUiState.Success -> {
-                Toast.makeText(context, "¡Bienvenido ${state.nombreUsuario}!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "¡Bienvenido ${state.nombreUsuario}!",
+                    Toast.LENGTH_SHORT
+                ).show()
+
                 onLogin()
             }
+
             is LoginUiState.Error -> {
-                Toast.makeText(context, state.mensaje, Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    context,
+                    state.mensaje,
+                    Toast.LENGTH_LONG
+                ).show()
+
                 viewModel.limpiarEstadoError()
             }
+
             else -> {}
         }
     }
@@ -63,22 +79,23 @@ fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Cream)
-            .padding(horizontal = 25.dp)
-            .padding(vertical = 20.dp),
+            .padding(horizontal = 25.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
 
-        // LOGOTIPO
+        // LOGOTIPO SUSHIGO
         Box(
             modifier = Modifier
                 .size(105.dp)
                 .background(Beige, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "🍣",
-                fontSize = 58.sp
+            Image(
+                painter = painterResource(id = R.drawable.sushigo_logo),
+                contentDescription = "Logo de SushiGo",
+                modifier = Modifier.size(95.dp),
+                contentScale = ContentScale.Fit
             )
         }
 
@@ -143,7 +160,10 @@ fun LoginScreen(
                 focusedBorderColor = WineRed,
                 unfocusedBorderColor = Beige,
                 focusedLabelColor = WineRed,
+                unfocusedLabelColor = SoftBrown,
                 cursorColor = WineRed,
+                focusedTextColor = DarkText,
+                unfocusedTextColor = DarkText,
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White
             )
@@ -165,7 +185,9 @@ fun LoginScreen(
             },
             trailingIcon = {
                 IconButton(
-                    onClick = { passwordVisible = !passwordVisible }
+                    onClick = {
+                        passwordVisible = !passwordVisible
+                    }
                 ) {
                     Icon(
                         imageVector = if (passwordVisible)
@@ -189,7 +211,10 @@ fun LoginScreen(
                 focusedBorderColor = WineRed,
                 unfocusedBorderColor = Beige,
                 focusedLabelColor = WineRed,
+                unfocusedLabelColor = SoftBrown,
                 cursorColor = WineRed,
+                focusedTextColor = DarkText,
+                unfocusedTextColor = DarkText,
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White
             )
@@ -209,9 +234,11 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(15.dp))
 
-        // BOTÓN INICIAR SESIÓN CON LOADING
+        // BOTÓN INICIAR SESIÓN
         Button(
-            onClick = { viewModel.login(email, password) },
+            onClick = {
+                viewModel.login(email, password)
+            },
             enabled = uiState !is LoginUiState.Loading,
             modifier = Modifier
                 .fillMaxWidth()

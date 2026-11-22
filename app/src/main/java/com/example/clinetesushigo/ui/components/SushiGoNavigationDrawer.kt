@@ -1,5 +1,6 @@
 package com.example.clinetesushigo.ui.components
 
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +21,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.clinetesushigo.R
 
 private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
@@ -75,9 +81,10 @@ fun SushiGoNavigationDrawer(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "🍣",
-                        fontSize = 48.sp
+                    Image(
+                        painter = painterResource(id = R.drawable.sushigo_logo),
+                        contentDescription = "Logo de SushiGo",
+                        modifier = Modifier.size(110.dp)
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
