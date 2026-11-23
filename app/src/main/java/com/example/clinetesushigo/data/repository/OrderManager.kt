@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
+import com.example.clinetesushigo.data.api.CancelOrderRequest
 
 object OrderManager {
 
@@ -39,7 +40,52 @@ object OrderManager {
             if (!silent) isLoading = false
         }
     }
+    suspend fun cancelOrder(
+        orderId: String,
+        motivo: String = "Cancelado por el cliente"
+    ): Result<Unit> {
 
+        if (orderId.isBlank()) {
+            return Result.failure(Exception("El ID del pedido no es válido"))
+        }
+
+        return try {
+            val response = RetrofitClient.orderApiService.cancelarOrden(
+                id = orderId,
+                request = CancelOrderRequest(motivo)
+            )
+
+            if (response.isSuccessful) {
+
+                // Actualizar los pedidos desde el servidor
+                fetchMyOrders(silent = true)
+
+                Result.success(Unit)
+
+            } else {
+                val errorRaw = response.errorBody()?.string()
+
+                val mensaje = try {
+                    JSONObject(errorRaw ?: "{}")
+                        .optString(
+                            "message",
+                            "No se pudo cancelar el pedido"
+                        )
+                } catch (e: Exception) {
+                    "No se pudo cancelar el pedido (Error ${response.code()})"
+                }
+
+                Result.failure(Exception(mensaje))
+            }
+
+        } catch (e: Exception) {
+            Result.failure(
+                Exception(
+                    "Error de conexión: ${e.localizedMessage ?: "Verifica tu internet"}"
+                )
+            )
+        }
+    }
     fun reorder(order: Order) {
         order.products.forEach { item ->
             CartManager.addProduct(

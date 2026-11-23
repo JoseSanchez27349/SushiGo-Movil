@@ -17,7 +17,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Inicializa RetrofitClient con el contexto para leer el token guardado en TokenManager
         RetrofitClient.init(applicationContext)
 
         enableEdgeToEdge()

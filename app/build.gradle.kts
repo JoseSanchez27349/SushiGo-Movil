@@ -5,6 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.clinetesushigo"
+
     compileSdk {
         version = release(37)
     }
@@ -16,7 +17,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner =
+            "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -26,43 +28,59 @@ android {
             }
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     buildFeatures {
         compose = true
     }
 }
 
 dependencies {
-    implementation(libs.androidx.compose.runtime)
 
-    implementation("io.coil-kt:coil-compose:2.7.0")
-    implementation("androidx.compose.material:material-icons-extended")
+    // BOM: administra las versiones de Compose
     implementation(platform(libs.androidx.compose.bom))
+
+    // Jetpack Compose
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // Android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    // Retrofit & Gson Converter para peticiones HTTP
+
+    // Imágenes
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
+    // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
-    // OkHttp Logging Interceptor (útil para depurar en Logcat)
+    // OkHttp
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // ViewModel para Compose
+    // Socket.IO
+    implementation("io.socket:socket.io-client:2.1.1")
+
+    // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
+
+    // Pruebas
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+
+    // Herramientas
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

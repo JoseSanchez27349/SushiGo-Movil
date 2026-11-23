@@ -17,7 +17,7 @@ private val Cream = Color(0xFFF8F5F0)
 private val WineRed = Color(0xFF9E3038)
 private val DarkText = Color(0xFF252525)
 private val SoftBrown = Color(0xFF81776D)
-private val White = Color(0xFFFFFFFF)
+private val White = Color.White
 
 @Composable
 fun ProfileScreen(
@@ -25,6 +25,7 @@ fun ProfileScreen(
     onViewOrders: () -> Unit,
     onLogout: () -> Unit
 ) {
+
     var name by remember { mutableStateOf("Cliente SushiGo") }
     var email by remember { mutableStateOf("cliente@email.com") }
     var phone by remember { mutableStateOf("") }
@@ -37,20 +38,26 @@ fun ProfileScreen(
             .padding(22.dp)
     ) {
 
-        // AVATAR Y DATOS DEL CLIENTE
+        // ENCABEZADO DEL PERFIL
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             Spacer(modifier = Modifier.height(15.dp))
 
             Surface(
-                modifier = Modifier.size(100.dp),
+                modifier = Modifier.size(90.dp),
                 shape = CircleShape,
                 color = WineRed
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text("👤", fontSize = 48.sp)
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "👤",
+                        fontSize = 43.sp
+                    )
                 }
             }
 
@@ -80,9 +87,11 @@ fun ProfileScreen(
                 containerColor = White
             )
         ) {
+
             Column(
                 modifier = Modifier.padding(18.dp)
             ) {
+
                 Text(
                     text = "INFORMACIÓN PERSONAL",
                     fontSize = 12.sp,
@@ -139,7 +148,11 @@ fun ProfileScreen(
                     )
                 ) {
                     Text(
-                        text = if (editing) "GUARDAR CAMBIOS" else "EDITAR PERFIL",
+                        text = if (editing) {
+                            "GUARDAR CAMBIOS"
+                        } else {
+                            "EDITAR PERFIL"
+                        },
                         fontWeight = FontWeight.Bold
                     )
                 }

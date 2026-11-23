@@ -9,6 +9,7 @@ import com.example.clinetesushigo.data.repository.CartManager
 
 import com.example.clinetesushigo.ui.components.SushiGoNavigationDrawer
 
+import com.example.clinetesushigo.ui.screens.MyOrdersScreen
 import com.example.clinetesushigo.ui.screens.splash.SplashScreen
 import com.example.clinetesushigo.ui.screens.login.LoginScreen
 import com.example.clinetesushigo.ui.screens.register.RegisterScreen
@@ -17,13 +18,13 @@ import com.example.clinetesushigo.ui.screens.cart.CartScreen
 import com.example.clinetesushigo.ui.screens.checkout.CheckoutScreen
 import com.example.clinetesushigo.ui.screens.confirmation.ConfirmationScreen
 import com.example.clinetesushigo.ui.screens.profile.ProfileScreen
-import com.example.clinetesushigo.ui.screens.orders.OrdersScreen
 import com.example.clinetesushigo.ui.screens.promotions.PromotionsScreen
 import com.example.clinetesushigo.ui.screens.forgotpassword.ForgotPasswordScreen
 import com.example.clinetesushigo.ui.screens.contact.ContactScreen
 import com.example.clinetesushigo.ui.screens.productdetail.ProductDetailScreen
 
 import kotlinx.coroutines.launch
+
 
 @Composable
 fun AppNavigation() {
@@ -46,6 +47,7 @@ fun AppNavigation() {
     var selectedProductPreparation by remember { mutableStateOf("") }
     var selectedProductImage by remember { mutableStateOf("") }
 
+
     // BOTÓN ATRÁS DEL CELULAR
     BackHandler(enabled = currentScreen != "splash") {
 
@@ -57,9 +59,7 @@ fun AppNavigation() {
 
             "home" -> "login"
 
-            // Los detalles ahora regresan directamente a Inicio
             "productdetail" -> "home"
-
             "branches" -> "home"
             "contact" -> "home"
             "promotions" -> "home"
@@ -70,11 +70,14 @@ fun AppNavigation() {
             "confirmation" -> "home"
 
             "profile" -> "home"
-            "orders" -> "profile"
+
+            // MIS PEDIDOS REGRESA A INICIO
+            "orders" -> "home"
 
             else -> "home"
         }
     }
+
 
     // CONTENIDO DE LAS PANTALLAS
     val screenContent: @Composable () -> Unit = {
@@ -88,12 +91,14 @@ fun AppNavigation() {
                 }
             )
 
+
             // INICIO DE SESIÓN
             "login" -> LoginScreen(
                 onLogin = {
                     scope.launch {
                         CartManager.syncCart()
                     }
+
                     currentScreen = "home"
                 },
                 onRegister = {
@@ -103,6 +108,7 @@ fun AppNavigation() {
                     currentScreen = "forgot"
                 }
             )
+
 
             // REGISTRO
             "register" -> RegisterScreen(
@@ -114,13 +120,13 @@ fun AppNavigation() {
                 }
             )
 
-            // INICIO CON EL MENÚ INTEGRADO
+
+            // INICIO
             "home" -> HomeScreen(
                 onOpenCart = {
                     currentScreen = "cart"
                 },
                 onOpenMenu = {
-                    // Ya no existe una pantalla independiente para el menú.
                     // Los productos se muestran directamente en Inicio.
                 },
                 onOpenProfile = {
@@ -129,11 +135,11 @@ fun AppNavigation() {
                 onOpenPromotions = {
                     currentScreen = "promotions"
                 },
-                onOpenProduct = { id, name, description, price, emoji,
-                                  category, protein, vegetarian,
-                                  spicy, preparation, imageUrl ->
+                onOpenProduct = {
+                        id, name, description, price, emoji,
+                        category, protein, vegetarian,
+                        spicy, preparation, imageUrl ->
 
-                    // Guardar información del producto seleccionado
                     selectedProductId = id
                     selectedProductName = name
                     selectedProductDescription = description
@@ -149,6 +155,7 @@ fun AppNavigation() {
                     currentScreen = "productdetail"
                 }
             )
+
 
             // DETALLES DEL PRODUCTO
             "productdetail" -> ProductDetailScreen(
@@ -183,8 +190,10 @@ fun AppNavigation() {
                 }
             )
 
+
             // CONTACTO
             "contact" -> ContactScreen()
+
 
             // PROMOCIONES
             "promotions" -> PromotionsScreen(
@@ -196,6 +205,7 @@ fun AppNavigation() {
                 }
             )
 
+
             // CARRITO
             "cart" -> CartScreen(
                 onBack = {
@@ -205,6 +215,7 @@ fun AppNavigation() {
                     currentScreen = "checkout"
                 }
             )
+
 
             // CHECKOUT
             "checkout" -> CheckoutScreen(
@@ -222,6 +233,7 @@ fun AppNavigation() {
                 }
             )
 
+
             // CONFIRMACIÓN
             "confirmation" -> currentOrder?.let { order ->
 
@@ -231,10 +243,12 @@ fun AppNavigation() {
                         currentScreen = "home"
                     },
                     onTrackOrder = {
+                        // Abrir el apartado único de Mis pedidos
                         currentScreen = "orders"
                     }
                 )
             }
+
 
             // PERFIL
             "profile" -> ProfileScreen(
@@ -251,15 +265,17 @@ fun AppNavigation() {
                 }
             )
 
-            // HISTORIAL
-            "orders" -> OrdersScreen(
+
+            // MIS PEDIDOS: ACTIVOS E HISTORIAL
+            "orders" -> MyOrdersScreen(
                 onBack = {
-                    currentScreen = "profile"
+                    currentScreen = "home"
                 },
                 onOpenCart = {
                     currentScreen = "cart"
                 }
             )
+
 
             // RECUPERAR CONTRASEÑA
             "forgot" -> ForgotPasswordScreen(
@@ -273,6 +289,7 @@ fun AppNavigation() {
         }
     }
 
+
     // PANTALLAS QUE TENDRÁN EL MENÚ LATERAL
     val drawerScreens = listOf(
         "home",
@@ -282,6 +299,7 @@ fun AppNavigation() {
         "profile",
         "orders"
     )
+
 
     if (currentScreen in drawerScreens) {
 
@@ -294,7 +312,6 @@ fun AppNavigation() {
             screenContent()
         }
 
-        
     } else {
 
         screenContent()
